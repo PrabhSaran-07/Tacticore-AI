@@ -1,17 +1,75 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ChatPanel from '../../components/ChatPanel';
 import TacticalMap from '../../components/TacticalMap';
 import ResourcePanel from '../../components/ResourcePanel';
 import TeamBoard from '../../components/TeamBoard';
 import ScoreCard from '../../components/ScoreCard';
+import socket from '../../services/socket';
 
 export default function SimulationRoom() {
   const [isRunning, setIsRunning] = useState(false);
   const [scenario] = useState('Urban Combat Training');
   const [time, setTime] = useState(0);
+  const [showBriefing, setShowBriefing] = useState(true);
+  const roomId = 'room-1'; // Hardcoded for now
+
+  useEffect(() => {
+    socket.emit('joinRoom', roomId);
+
+    socket.on('simulationStateChange', (data) => {
+      setIsRunning(data.isRunning);
+    });
+
+    return () => {
+      socket.off('simulationStateChange');
+    };
+  }, []);
+
+  useEffect(() => {
+    let interval = null;
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTime(time => time + 1);
+      }, 1000);
+    } else if (!isRunning && time !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, time]);
+
+  const toggleSimulation = () => {
+    const newState = !isRunning;
+    setIsRunning(newState);
+    socket.emit('simulationStateChange', { roomId, isRunning: newState });
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative' }}>
+      {/* Briefing Modal */}
+      {showBriefing && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div className="card" style={{ maxWidth: '600px', width: '100%' }}>
+            <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Mission Briefing: {scenario}</h2>
+            <p style={{ marginBottom: '1rem' }}>
+              <strong>Objective:</strong> You are tasked with coordinating a tactical operation in a dense urban environment. Alpha Squad and Bravo Team have been deployed.
+            </p>
+            <p style={{ marginBottom: '1rem' }}>
+              <strong>Intelligence:</strong> Enemy forces have been spotted in sector 4. Your goal is to secure the perimeter and extract the VIP without civilian casualties.
+            </p>
+            <p style={{ marginBottom: '1rem' }}>
+              <strong>Instructions:</strong> Use the Tactical Map to place markers, move units, and draw execution paths. Coordinate with your team using the real-time chat. Click 'Start' when ready to begin the simulation.
+            </p>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowBriefing(false)}>
+              Acknowledge & Begin Planning
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -28,13 +86,13 @@ export default function SimulationRoom() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button
-            onClick={() => setIsRunning(!isRunning)}
+            onClick={toggleSimulation}
             className={`btn ${isRunning ? 'btn-danger' : 'btn-success'}`}
           >
             {isRunning ? '⏸ Pause' : '▶ Start'}
           </button>
-          <button className="btn btn-secondary">📊 Stats</button>
-          <button className="btn btn-secondary">⚙️ Settings</button>
+          <button className="btn btn-secondary" onClick={() => alert('Stats view coming soon!')}>📊 Stats</button>
+          <button className="btn btn-secondary" onClick={() => setShowBriefing(true)}>📋 Briefing</button>
         </div>
       </div>
 
@@ -51,7 +109,7 @@ export default function SimulationRoom() {
             overflow: 'hidden',
             height: '31.25rem'
           }}>
-            <TacticalMap />
+            <TacticalMap roomId={roomId} />
           </div>
         </div>
 
@@ -116,7 +174,7 @@ export default function SimulationRoom() {
       }}>
         {/* Chat Panel */}
         <div style={{ gridColumn: 'span 2' }}>
-          <ChatPanel />
+          <ChatPanel roomId={roomId} />
         </div>
 
         {/* Team Board */}
