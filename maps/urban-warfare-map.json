@@ -1,0 +1,6 @@
+{
+  "name": "Urban Warfare",
+  "terrain": "urban",
+  "complexity": "high",
+  "objectives": ["clear sector", "rescue hostages"]
+}

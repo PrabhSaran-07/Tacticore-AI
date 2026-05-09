@@ -1,0 +1,6 @@
+{
+  "name": "Border Zone",
+  "terrain": "border",
+  "threatLevel": "elevated",
+  "objectives": ["defuse ambush", "secure perimeter"]
+}

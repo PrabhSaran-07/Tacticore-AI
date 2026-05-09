@@ -1,0 +1,6 @@
+{
+  "name": "Mountain Terrain",
+  "terrain": "mountain",
+  "elevation": "high",
+  "objectives": ["capture ridge", "hold valley pass"]
+}

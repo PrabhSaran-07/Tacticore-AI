@@ -1,0 +1,6 @@
+{
+  "name": "Village Map",
+  "terrain": "mixed",
+  "spawnPoints": ["north", "south"],
+  "objectives": ["secure bridge", "protect convoy"]
+}
