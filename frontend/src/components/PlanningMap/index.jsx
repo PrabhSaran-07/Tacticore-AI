@@ -19,11 +19,16 @@ const RESOURCE_ICONS = {
 };
 
 const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode }, ref) {
-  const canvasRef = useRef(null);
+  const svgRef = useRef(null);
   const [markers, setMarkers] = useState([]);
   const [paths, setPaths] = useState([]);
   const [drawingPath, setDrawingPath] = useState(null);
-  const [hoveredCell, setHoveredCell] = useState(null);
+  
+  // Zoom and Pan states
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
 
   // Expose map state to parent via ref
   useImperativeHandle(ref, () => ({
@@ -44,12 +49,24 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode }, ref)
     return () => socket.off('mapUpdate');
   }, [roomId]);
 
-  const handleCanvasClick = (e) => {
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const getMousePosition = (e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const pt = svgRef.current.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const svgP = pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
+    return { x: svgP.x, y: svgP.y };
+  };
 
-    if (activeMode === 'view') return;
+  const handlePointerDown = (e) => {
+    if (activeMode === 'view' || e.button === 1 || e.button === 2) {
+      // Allow panning in view mode or with middle/right click
+      setIsPanning(true);
+      setLastPanPos({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    const { x, y } = getMousePosition(e);
 
     if (activeMode === 'draw_path') {
       if (!drawingPath) {
@@ -62,11 +79,7 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode }, ref)
     }
 
     if (activeMode === 'finish_path' && drawingPath) {
-      const newPath = { id: Date.now(), points: drawingPath.points, color: '#22d3ee' };
-      setPaths(prev => [...prev, newPath]);
-      socket.emit('mapUpdate', { roomId, type: 'path', path: newPath });
-      setDrawingPath(null);
-      return;
+      return; // Handled by button
     }
 
     const resourceInfo = RESOURCE_ICONS[activeMode];
@@ -84,6 +97,29 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode }, ref)
     }
   };
 
+  const handlePointerMove = (e) => {
+    if (isPanning) {
+      const dx = e.clientX - lastPanPos.x;
+      const dy = e.clientY - lastPanPos.y;
+      // Convert pixel delta to SVG coordinate delta
+      const ctm = svgRef.current.getScreenCTM();
+      setPan(prev => ({ x: prev.x - dx / ctm.a, y: prev.y - dy / ctm.d }));
+      setLastPanPos({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handlePointerUp = () => {
+    setIsPanning(false);
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const zoomFactor = 1.1;
+    let newZoom = e.deltaY < 0 ? zoom * zoomFactor : zoom / zoomFactor;
+    newZoom = Math.min(Math.max(0.5, newZoom), 5); // clamp zoom
+    setZoom(newZoom);
+  };
+
   const handleClear = () => {
     setMarkers([]);
     setPaths([]);
@@ -92,26 +128,39 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode }, ref)
   };
 
   const getCursor = () => {
-    if (activeMode === 'view') return 'default';
+    if (isPanning) return 'grabbing';
+    if (activeMode === 'view') return 'grab';
     return 'crosshair';
   };
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#0f172a', position: 'relative' }}>
+      
+      {/* Zoom Controls */}
+      <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(15,23,42,0.8)', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--gray-700)' }}>
+        <button onClick={() => setZoom(z => Math.min(z * 1.2, 5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>➕</button>
+        <button onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1rem' }}>🔄</button>
+        <button onClick={() => setZoom(z => Math.max(z / 1.2, 0.5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>➖</button>
+      </div>
+
       {/* Map Canvas */}
       <div
         style={{ flex: 1, position: 'relative', overflow: 'hidden', cursor: getCursor() }}
-        onClick={handleCanvasClick}
-        ref={canvasRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onWheel={handleWheel}
       >
         <svg
+          ref={svgRef}
           width="100%"
           height="100%"
-          viewBox={`0 0 ${MAP_W} ${MAP_H}`}
-          style={{ display: 'block' }}
+          viewBox={`${pan.x} ${pan.y} ${MAP_W / zoom} ${MAP_H / zoom}`}
+          style={{ display: 'block', touchAction: 'none' }}
         >
           {/* Background - terrain */}
-          <rect x="0" y="0" width={MAP_W} height={MAP_H} fill="#3d6b47" />
+          <rect x="-1000" y="-1000" width="3000" height="3000" fill="#3d6b47" />
 
           {/* Village area (center-left) */}
           <rect x="80" y="80" width="320" height="280" rx="8" fill="#7c6a4a" opacity="0.8" />
