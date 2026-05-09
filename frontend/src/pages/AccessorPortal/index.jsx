@@ -306,6 +306,15 @@ export default function AccessorPortal() {
                         color: 'white', fontWeight: 'bold', fontSize: '0.75rem'
                       }}>{(sub.cadetName || 'C')[0].toUpperCase()}</div>
                       <span style={{ color: 'var(--gray-100)', fontWeight: '600' }}>{sub.cadetName || 'Cadet'}</span>
+                      {sub.olqAnalysis && (
+                        <span style={{ 
+                          background: sub.olqAnalysis.overallScore >= 8 ? 'rgba(16,185,129,0.2)' : sub.olqAnalysis.overallScore >= 5 ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)', 
+                          color: sub.olqAnalysis.overallScore >= 8 ? 'var(--success)' : sub.olqAnalysis.overallScore >= 5 ? 'var(--primary)' : 'var(--warning)', 
+                          padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold' 
+                        }}>
+                          OLQ: {sub.olqAnalysis.overallScore}/10
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       <span style={{ color: 'var(--gray-500)', fontSize: '0.75rem' }}>

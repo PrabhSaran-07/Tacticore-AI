@@ -1,244 +1,181 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ResultsPage() {
-  const [selectedMetric, setSelectedMetric] = useState('accuracy');
+  const navigate = useNavigate();
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedResult, setSelectedResult] = useState(null);
 
-  const [analyticsData] = useState([
-    { scenario: 'Village Fire', accuracy: 96.2, time: '45m 32s', score: 9850 },
-    { scenario: 'Broken Bridge', accuracy: 92.1, time: '38m 15s', score: 8920 },
-    { scenario: 'Rescue Operation', accuracy: 94.5, time: '52m 08s', score: 9650 },
-    { scenario: 'Evacuation Plan', accuracy: 91.8, time: '41m 22s', score: 8750 },
-  ]);
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/sessions/my-results', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setResults(data.results || []);
+          if (data.results?.length > 0) {
+            setSelectedResult(data.results[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching results:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResults();
+  }, []);
 
-  const [aiMetrics] = useState({
-    modelAccuracy: 94.7,
-    responseTime: 0.23,
-    decisionQuality: 96.2,
-    patternRecognition: 93.8,
-    riskAssessment: 95.1,
-  });
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: 'var(--gray-400)' }}>Analyzing your performance...</div>;
+  }
+
+  if (results.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '5rem 1rem', color: 'var(--gray-500)' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📊</div>
+        <h2 style={{ fontSize: '1.5rem', color: 'var(--gray-300)', marginBottom: '0.5rem' }}>No Analysis Available</h2>
+        <p>You haven't submitted any exercise solutions yet.</p>
+        <button className="btn btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => navigate('/cadet')}>
+          Join a Session
+        </button>
+      </div>
+    );
+  }
+
+  const analysis = selectedResult?.submission?.olqAnalysis;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div>
-        <h1 style={{
-          fontSize: '2.25rem',
-          fontWeight: 'bold',
-          color: 'var(--gray-100)',
-          marginBottom: '0.5rem'
-        }}>Performance Analytics</h1>
-        <p style={{ color: 'var(--gray-400)' }}>Comprehensive evaluation reports and AI analysis</p>
-      </div>
-
-      {/* AI Metrics Overview */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '1rem'
-      }}>
-        <div className="stat-box">
-          <div className="stat-value">{aiMetrics.modelAccuracy.toFixed(1)}%</div>
-          <div className="stat-label">Model Accuracy</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '0.5rem' }}>
+            AI Performance Analysis
+          </h1>
+          <p style={{ color: 'var(--gray-400)' }}>SSB Officer Like Qualities (OLQ) Evaluation</p>
         </div>
-        <div className="stat-box">
-          <div className="stat-value">{aiMetrics.responseTime.toFixed(2)}s</div>
-          <div className="stat-label">Response Time</div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-value">{aiMetrics.decisionQuality.toFixed(1)}%</div>
-          <div className="stat-label">Decision Quality</div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-value">{aiMetrics.patternRecognition.toFixed(1)}%</div>
-          <div className="stat-label">Pattern Recognition</div>
-        </div>
-        <div className="stat-box">
-          <div className="stat-value">{aiMetrics.riskAssessment.toFixed(1)}%</div>
-          <div className="stat-label">Risk Assessment</div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <select 
+            className="input" 
+            style={{ minWidth: '200px' }}
+            onChange={(e) => setSelectedResult(results.find(r => r.sessionId === e.target.value))}
+            value={selectedResult?.sessionId || ''}
+          >
+            {results.map(r => (
+              <option key={r.sessionId} value={r.sessionId}>Session: {r.sessionCode}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Detailed Results */}
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Simulation Results</h2>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', fontSize: '0.875rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--gray-700)' }}>
-                <th style={{
-                  textAlign: 'left',
-                  padding: '0.75rem 1rem',
-                  color: 'var(--gray-300)',
-                  fontWeight: '600'
-                }}>Scenario</th>
-                <th style={{
-                  textAlign: 'left',
-                  padding: '0.75rem 1rem',
-                  color: 'var(--gray-300)',
-                  fontWeight: '600'
-                }}>Accuracy</th>
-                <th style={{
-                  textAlign: 'left',
-                  padding: '0.75rem 1rem',
-                  color: 'var(--gray-300)',
-                  fontWeight: '600'
-                }}>Duration</th>
-                <th style={{
-                  textAlign: 'left',
-                  padding: '0.75rem 1rem',
-                  color: 'var(--gray-300)',
-                  fontWeight: '600'
-                }}>Score</th>
-                <th style={{
-                  textAlign: 'left',
-                  padding: '0.75rem 1rem',
-                  color: 'var(--gray-300)',
-                  fontWeight: '600'
-                }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analyticsData.map((result, idx) => (
-                <tr key={idx} style={{
-                  borderBottom: '1px solid var(--gray-800)',
-                  transition: 'background-color 0.2s ease'
-                }}>
-                  <td style={{
-                    padding: '0.75rem 1rem',
-                    color: 'var(--gray-100)'
-                  }}>{result.scenario}</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}>
-                      <div style={{
-                        width: '6rem',
-                        background: 'var(--gray-700)',
-                        borderRadius: '9999px',
-                        height: '0.5rem'
-                      }}>
-                        <div style={{
-                          background: 'var(--success)',
-                          height: '0.5rem',
-                          borderRadius: '9999px',
-                          width: `${result.accuracy}%`
-                        }}></div>
+      {analysis ? (
+        <>
+          {/* Top Overview Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+            <div className="card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.05))', border: '1px solid rgba(59,130,246,0.3)' }}>
+              <p style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Overall OLQ Score</p>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>
+                {analysis.overallScore} <span style={{ fontSize: '1.5rem', color: 'var(--gray-500)' }}>/ 10</span>
+              </div>
+            </div>
+            
+            <div className="card">
+              <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Top Strengths</p>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: 0, padding: 0, listStyle: 'none' }}>
+                {analysis.strengths?.map((s, i) => (
+                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
+                    <span>✓ {s.name}</span>
+                    <strong>{s.score}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="card">
+              <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Areas for Growth</p>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: 0, padding: 0, listStyle: 'none' }}>
+                {analysis.improvements?.map((s, i) => (
+                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--warning)' }}>
+                    <span>⚠ {s.name}</span>
+                    <strong>{s.score}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* AI Recommendation */}
+          <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--gray-200)', marginBottom: '0.5rem' }}>AI Assessor Recommendation</h3>
+            <p style={{ color: 'var(--gray-400)', lineHeight: '1.6' }}>{analysis.recommendation}</p>
+          </div>
+
+          {/* Detailed OLQ Breakdowns */}
+          <h2 style={{ fontSize: '1.5rem', color: 'var(--gray-100)', marginTop: '1rem', borderBottom: '1px solid var(--gray-800)', paddingBottom: '0.5rem' }}>
+            Factor Analysis (15 OLQs)
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+            {Object.entries(analysis.categories || {}).map(([categoryName, categoryData]) => (
+              <div key={categoryName} className="card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3 style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{categoryName}</h3>
+                  <span style={{ background: 'rgba(59,130,246,0.1)', padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.85rem', color: 'var(--primary)' }}>
+                    Avg: {categoryData.average}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {categoryData.qualities.map(q => (
+                    <div key={q.name}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.3rem' }}>
+                        <span style={{ color: 'var(--gray-300)' }}>{q.name}</span>
+                        <span style={{ color: 'var(--gray-400)', fontWeight: 'bold' }}>{q.score} / 10</span>
                       </div>
-                      <span style={{
-                        color: 'var(--gray-300)',
-                        fontSize: '0.875rem'
-                      }}>{result.accuracy.toFixed(1)}%</span>
+                      <div style={{ width: '100%', height: '6px', background: 'var(--gray-800)', borderRadius: '3px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          height: '100%', 
+                          width: `${(q.score / 10) * 100}%`,
+                          background: q.score >= 8 ? 'var(--success)' : q.score >= 5 ? 'var(--primary)' : 'var(--warning)',
+                          borderRadius: '3px'
+                        }} />
+                      </div>
                     </div>
-                  </td>
-                  <td style={{
-                    padding: '0.75rem 1rem',
-                    color: 'var(--gray-300)'
-                  }}>{result.time}</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <span style={{
-                      color: 'var(--primary)',
-                      fontWeight: '600'
-                    }}>{result.score}</span>
-                  </td>
-                  <td style={{ padding: '0.75rem 1rem' }}>
-                    <span className="badge badge-success">✓ Completed</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Performance Insights */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '1.5rem'
-      }}>
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Key Findings</h3>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-          <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <li style={{
-              display: 'flex',
-              alignItems: 'start',
-              gap: '0.75rem'
-            }}>
-              <span style={{
-                color: 'var(--success)',
-                fontSize: '1.25rem'
-              }}>✓</span>
-              <p style={{ color: 'var(--gray-300)' }}>
-                <strong>High Accuracy Rate:</strong> Average 93.7% across all scenarios
-              </p>
-            </li>
-            <li style={{
-              display: 'flex',
-              alignItems: 'start',
-              gap: '0.75rem'
-            }}>
-              <span style={{
-                color: 'var(--warning)',
-                fontSize: '1.25rem'
-              }}>⚠</span>
-              <p style={{ color: 'var(--gray-300)' }}>
-                <strong>Complex Scenarios:</strong> Village Fire showed lower accuracy - recommend enhancement
-              </p>
-            </li>
-            <li style={{
-              display: 'flex',
-              alignItems: 'start',
-              gap: '0.75rem'
-            }}>
-              <span style={{
-                color: 'var(--primary)',
-                fontSize: '1.25rem'
-              }}>💡</span>
-              <p style={{ color: 'var(--gray-300)' }}>
-                <strong>Improvement Trend:</strong> Performance improving 0.8% per week
-              </p>
-            </li>
-          </ul>
-        </div>
 
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Recommendations</h3>
+          {/* Submission Stats */}
+          <div className="card" style={{ marginTop: '1rem' }}>
+            <h3 style={{ fontSize: '1.1rem', color: 'var(--gray-200)', marginBottom: '1rem' }}>Execution Metrics</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem' }}>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase' }}>Resources Placed</p>
+                <p style={{ fontSize: '1.5rem', color: 'var(--gray-100)', fontWeight: 'bold' }}>{analysis.metrics?.totalMarkers}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase' }}>Routes Drawn</p>
+                <p style={{ fontSize: '1.5rem', color: 'var(--gray-100)', fontWeight: 'bold' }}>{analysis.metrics?.totalPaths}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase' }}>Resource Utilization</p>
+                <p style={{ fontSize: '1.5rem', color: 'var(--gray-100)', fontWeight: 'bold' }}>{analysis.metrics?.resourceUtilization}%</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase' }}>Map Distribution</p>
+                <p style={{ fontSize: '1.5rem', color: 'var(--gray-100)', fontWeight: 'bold' }}>{analysis.metrics?.spatialDistribution}%</p>
+              </div>
+            </div>
           </div>
-          <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <li style={{
-              display: 'flex',
-              alignItems: 'start',
-              gap: '0.75rem'
-            }}>
-              <span style={{ fontSize: '1.125rem' }}>1.</span>
-              <p style={{ color: 'var(--gray-300)' }}>Increase training data for village scenario patterns</p>
-            </li>
-            <li style={{
-              display: 'flex',
-              alignItems: 'start',
-              gap: '0.75rem'
-            }}>
-              <span style={{ fontSize: '1.125rem' }}>2.</span>
-              <p style={{ color: 'var(--gray-300)' }}>Optimize decision tree for time-critical decisions</p>
-            </li>
-            <li style={{
-              display: 'flex',
-              alignItems: 'start',
-              gap: '0.75rem'
-            }}>
-              <span style={{ fontSize: '1.125rem' }}>3.</span>
-              <p style={{ color: 'var(--gray-300)' }}>Implement reinforcement learning for adaptive responses</p>
-            </li>
-          </ul>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--gray-500)' }}>
+          Select a session to view its analysis.
         </div>
-      </div>
+      )}
     </div>
   );
 }

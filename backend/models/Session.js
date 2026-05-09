@@ -25,7 +25,8 @@ const SessionSchema = new mongoose.Schema({
         markers: Array,
         paths: Array
       },
-      note: String
+      note: String,
+      olqAnalysis: Object
     }
   ]
 }, { timestamps: true });

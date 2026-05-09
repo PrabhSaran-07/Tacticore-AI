@@ -246,30 +246,6 @@ export default function SimulationRoom() {
         </div>
       )}
 
-      {/* ===== ANALYTICS MODAL ===== */}
-      {showAnalytics && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }}>
-          <div className="card" style={{ maxWidth: '500px', width: '100%' }}>
-            <h2 className="card-title" style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Planning Analytics</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <span>Resource Allocation</span>
-                <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>Optimal</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <span>Coordination Score</span>
-                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>92/100</span>
-              </div>
-            </div>
-            <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setShowAnalytics(false)}>Close Reports</button>
-          </div>
-        </div>
-      )}
-
       {/* ===== HEADER ===== */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0' }}>
         <div>
@@ -294,7 +270,6 @@ export default function SimulationRoom() {
           <button onClick={toggleSimulation} className={`btn ${isRunning ? 'btn-danger' : 'btn-success'}`}>
             {isRunning ? '⏸ Pause' : '▶ Start'}
           </button>
-          <button className="btn btn-secondary" onClick={() => setShowAnalytics(true)}>📊 Analytics</button>
           <button className="btn btn-secondary" onClick={() => setShowBriefing(true)}>📋 Situation</button>
         </div>
       </div>
@@ -333,7 +308,6 @@ export default function SimulationRoom() {
                 {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
               </p>
             </div>
-            <ScoreCard title="Coordination" value="8.5/10" />
           </div>
           <ResourcePanel resources={session.assignedResources} />
           <TeamBoard />

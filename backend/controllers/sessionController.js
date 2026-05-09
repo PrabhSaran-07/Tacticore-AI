@@ -125,11 +125,21 @@ exports.getSessionById = async (req, res) => {
 exports.submitAnswer = async (req, res) => {
   try {
     const { markers, paths, note } = req.body;
-    const cadetUser = isMockMode()
-      ? mockDb.users.find(u => u._id === req.user.id)
-      : null;
+    const { analyzeSubmission } = require('../services/olqAnalyzer');
+    
+    let session;
+    let cadetUser;
+    
+    if (isMockMode()) {
+      session = mockDb.sessions.find(s => s._id === req.params.id);
+      cadetUser = mockDb.users.find(u => u._id === req.user.id);
+    } else {
+      session = await Session.findById(req.params.id);
+    }
 
-    const submission = {
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    const submissionData = {
       cadet: req.user.id,
       cadetName: cadetUser?.name || req.user.name || 'Cadet',
       submittedAt: new Date(),
@@ -137,29 +147,29 @@ exports.submitAnswer = async (req, res) => {
       note: note || ''
     };
 
+    // Run AI OLQ Analysis
+    const olqAnalysis = analyzeSubmission(submissionData, session);
+    submissionData.olqAnalysis = olqAnalysis;
+
     if (isMockMode()) {
-      const session = mockDb.sessions.find(s => s._id === req.params.id);
-      if (!session) return res.status(404).json({ message: 'Session not found' });
       if (!session.submissions) session.submissions = [];
-      // Replace existing submission from this cadet if any
       session.submissions = session.submissions.filter(s => s.cadet !== req.user.id);
-      session.submissions.push(submission);
-      return res.status(200).json({ message: 'Answer submitted successfully!', submission });
+      session.submissions.push(submissionData);
+      return res.status(200).json({ message: 'Answer submitted successfully!', submission: submissionData });
     }
 
     // MongoDB mode
-    const session = await Session.findByIdAndUpdate(
+    await Session.findByIdAndUpdate(
       req.params.id,
       { $pull: { submissions: { cadet: req.user.id } } },
       { new: true }
     );
-    if (!session) return res.status(404).json({ message: 'Session not found' });
 
     await Session.findByIdAndUpdate(
       req.params.id,
-      { $push: { submissions: submission } }
+      { $push: { submissions: submissionData } }
     );
-    res.status(200).json({ message: 'Answer submitted successfully!', submission });
+    res.status(200).json({ message: 'Answer submitted successfully!', submission: submissionData });
   } catch (error) {
     res.status(500).json({ message: 'Error submitting answer', error: error.message });
   }
@@ -167,13 +177,31 @@ exports.submitAnswer = async (req, res) => {
 
 exports.getSubmissions = async (req, res) => {
   try {
+    const { analyzeSubmission } = require('../services/olqAnalyzer');
+    let session;
     if (isMockMode()) {
-      const session = mockDb.sessions.find(s => s._id === req.params.id);
-      if (!session) return res.status(404).json({ message: 'Session not found' });
-      return res.status(200).json({ submissions: session.submissions || [] });
+      session = mockDb.sessions.find(s => s._id === req.params.id);
+    } else {
+      session = await Session.findById(req.params.id).populate('submissions.cadet', 'name');
     }
-    const session = await Session.findById(req.params.id).populate('submissions.cadet', 'name');
+
     if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    // Auto-analyze any submissions missing OLQ analysis
+    if (session.submissions && session.submissions.length > 0) {
+      let updated = false;
+      session.submissions.forEach(sub => {
+        if (!sub.olqAnalysis) {
+          sub.olqAnalysis = analyzeSubmission(sub, session);
+          updated = true;
+        }
+      });
+      
+      if (updated && !isMockMode()) {
+        await session.save();
+      }
+    }
+
     res.status(200).json({ submissions: session.submissions || [] });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching submissions', error: error.message });
@@ -193,5 +221,45 @@ exports.deleteSession = async (req, res) => {
     res.status(200).json({ message: 'Session deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting session', error: error.message });
+  }
+};
+
+exports.getMyResults = async (req, res) => {
+  try {
+    const { analyzeSubmission } = require('../services/olqAnalyzer');
+    let sessions = [];
+    if (isMockMode()) {
+      sessions = mockDb.sessions;
+    } else {
+      sessions = await Session.find({ 'submissions.cadet': req.user.id });
+    }
+
+    const results = [];
+    for (let session of sessions) {
+      let submission = session.submissions.find(s => String(s.cadet) === String(req.user.id));
+      if (!submission) continue;
+
+      // Auto-analyze if missing (for older submissions)
+      if (!submission.olqAnalysis) {
+        submission.olqAnalysis = analyzeSubmission(submission, session);
+        if (!isMockMode()) {
+          await Session.updateOne(
+            { _id: session._id, 'submissions.cadet': req.user.id },
+            { $set: { 'submissions.$.olqAnalysis': submission.olqAnalysis } }
+          );
+        }
+      }
+
+      results.push({
+        sessionId: session._id,
+        sessionCode: session.sessionCode,
+        problemDescription: session.problemDescription,
+        submission
+      });
+    }
+
+    res.status(200).json({ results });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching results', error: error.message });
   }
 };
