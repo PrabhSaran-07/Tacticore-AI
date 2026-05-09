@@ -61,9 +61,13 @@ export default function SimulationRoom() {
       interval = setInterval(() => setTime(t => t - 1), 1000);
     } else if (time === 0 && isRunning) {
       setIsRunning(false);
+      if (isCadet && submitStatus !== 'success') {
+        handleSubmitAnswer();
+        alert("Time is up! Your answer has been automatically submitted.");
+      }
     }
     return () => { if (interval) clearInterval(interval); };
-  }, [isRunning, time]);
+  }, [isRunning, time, isCadet, submitStatus]);
 
   const toggleSimulation = () => {
     const newState = !isRunning;
@@ -171,7 +175,10 @@ export default function SimulationRoom() {
                 {isAccessor && ' You can save your optimum solution for future comparison.'}
               </p>
             </div>
-            <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }} onClick={() => setShowBriefing(false)}>
+            <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }} onClick={() => {
+              setShowBriefing(false);
+              setIsRunning(true);
+            }}>
               Start Exercise
             </button>
           </div>
@@ -267,9 +274,12 @@ export default function SimulationRoom() {
               💾 Save Optimum Solution
             </button>
           )}
-          <button onClick={toggleSimulation} className={`btn ${isRunning ? 'btn-danger' : 'btn-success'}`}>
-            {isRunning ? '⏸ Pause' : '▶ Start'}
-          </button>
+          {/* Accessor: Toggle Global Simulation State */}
+          {isAccessor && (
+            <button onClick={toggleSimulation} className={`btn ${isRunning ? 'btn-danger' : 'btn-success'}`}>
+              {isRunning ? '⏸ Pause' : '▶ Start'}
+            </button>
+          )}
           <button className="btn btn-secondary" onClick={() => setShowBriefing(true)}>📋 Situation</button>
         </div>
       </div>
