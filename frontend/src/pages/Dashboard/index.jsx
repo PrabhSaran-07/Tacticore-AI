@@ -280,7 +280,7 @@ export default function Dashboard() {
             <li style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
               <span style={{ fontSize: '1.25rem' }}>🎯</span>
               <p style={{ fontSize: '0.875rem', color: 'var(--gray-300)' }}>
-                New tactical patterns identified in latest scenarios
+                New coordination patterns identified in latest scenarios
               </p>
             </li>
           </ul>

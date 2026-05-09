@@ -2,17 +2,17 @@ import { useState } from 'react';
 
 export default function InstructorPanel() {
   const [students] = useState([
-    { id: 1, name: 'Lieutenant Adams', status: 'in-progress', scenario: 'Urban Combat', progress: 65 },
-    { id: 2, name: 'Captain Rivera', status: 'completed', scenario: 'Mountain Terrain', progress: 100 },
-    { id: 3, name: 'Sergeant Chen', status: 'in-progress', scenario: 'Border Zone', progress: 42 },
-    { id: 4, name: 'Corporal Martinez', status: 'completed', scenario: 'Village Defense', progress: 100 },
+    { id: 1, name: 'Aman', status: 'in-progress', scenario: 'Village Fire', progress: 65 },
+    { id: 2, name: 'Ravi', status: 'completed', scenario: 'Flood Rescue', progress: 100 },
+    { id: 3, name: 'Sameer', status: 'in-progress', scenario: 'Bridge Rescue', progress: 42 },
+    { id: 4, name: 'Mohit', status: 'completed', scenario: 'Fire Containment', progress: 100 },
   ]);
 
   const [scenarios] = useState([
-    { id: 1, name: 'Urban Combat Training', difficulty: 'Medium', duration: '45min', students: 24 },
-    { id: 2, name: 'Mountain Terrain Mission', difficulty: 'Hard', duration: '50min', students: 18 },
-    { id: 3, name: 'Border Zone Patrol', difficulty: 'Medium', duration: '40min', students: 31 },
-    { id: 4, name: 'Village Defense Protocol', difficulty: 'Hard', duration: '55min', students: 12 },
+    { id: 1, name: 'Village Fire Exercise', difficulty: 'Medium', duration: '45min', students: 24 },
+    { id: 2, name: 'Flood Rescue Exercise', difficulty: 'Hard', duration: '50min', students: 18 },
+    { id: 3, name: 'Emergency Evacuation', difficulty: 'Medium', duration: '40min', students: 31 },
+    { id: 4, name: 'Fire Containment Plan', difficulty: 'Hard', duration: '55min', students: 12 },
   ]);
 
   return (

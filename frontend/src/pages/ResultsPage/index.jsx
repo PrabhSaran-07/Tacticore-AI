@@ -188,7 +188,7 @@ export default function ResultsPage() {
                 fontSize: '1.25rem'
               }}>⚠</span>
               <p style={{ color: 'var(--gray-300)' }}>
-                <strong>Complex Scenarios:</strong> Village Defense showed lower accuracy - recommend enhancement
+                <strong>Complex Scenarios:</strong> Village Fire showed lower accuracy - recommend enhancement
               </p>
             </li>
             <li style={{

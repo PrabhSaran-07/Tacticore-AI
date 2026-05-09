@@ -21,19 +21,19 @@ const mockDb = {
   scenarios: [
     {
       _id: '1',
-      title: 'Village Defense',
-      description: 'Defend a strategic village from enemy assault',
+      title: 'Village Fire Emergency',
+      description: 'Coordinate fire containment and rescue operations in the village',
       map: 'village-map.json',
-      objectives: ['secure bridge', 'protect convoy'],
+      objectives: ['extinguish fire', 'save approaching train'],
       createdBy: '1',
       createdAt: new Date()
     },
     {
       _id: '2',
-      title: 'Mountain Siege',
-      description: 'Capture and hold mountain ridge position',
+      title: 'Flood Rescue Exercise',
+      description: 'Organize evacuation and relief for flood-affected mountain area',
       map: 'mountain-terrain.json',
-      objectives: ['capture ridge', 'hold valley pass'],
+      objectives: ['evacuate stranded residents', 'establish supply line'],
       createdBy: '1',
       createdAt: new Date()
     }
