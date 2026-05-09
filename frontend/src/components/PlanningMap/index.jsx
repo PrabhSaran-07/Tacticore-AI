@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import socket from '../../services/socket';
 
 // Custom 2D SVG-based planning map - Village Fire Scenario
@@ -18,12 +18,17 @@ const RESOURCE_ICONS = {
   add_pump: { icon: '💧', label: 'Water Pump', color: '#06b6d4' },
 };
 
-export default function PlanningMap({ roomId, activeMode }) {
+const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode }, ref) {
   const canvasRef = useRef(null);
   const [markers, setMarkers] = useState([]);
   const [paths, setPaths] = useState([]);
   const [drawingPath, setDrawingPath] = useState(null);
   const [hoveredCell, setHoveredCell] = useState(null);
+
+  // Expose map state to parent via ref
+  useImperativeHandle(ref, () => ({
+    getMapState: () => ({ markers, paths })
+  }), [markers, paths]);
 
   // Fixed scenario layout (grid-based)
   const MAP_W = 800;
@@ -258,4 +263,6 @@ export default function PlanningMap({ roomId, activeMode }) {
       </div>
     </div>
   );
-}
+});
+
+export default PlanningMap;

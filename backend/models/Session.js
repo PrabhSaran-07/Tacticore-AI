@@ -15,7 +15,19 @@ const SessionSchema = new mongoose.Schema({
   },
   timeLimit: { type: Number, default: 30 }, // in minutes
   timeline: Array,
-  results: { type: mongoose.Schema.Types.ObjectId, ref: 'Result' }
+  results: { type: mongoose.Schema.Types.ObjectId, ref: 'Result' },
+  submissions: [
+    {
+      cadet: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      cadetName: String,
+      submittedAt: { type: Date, default: Date.now },
+      mapState: {
+        markers: Array,
+        paths: Array
+      },
+      note: String
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Session', SessionSchema);

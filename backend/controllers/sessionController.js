@@ -121,3 +121,61 @@ exports.getSessionById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching session', error: error.message });
   }
 };
+
+exports.submitAnswer = async (req, res) => {
+  try {
+    const { markers, paths, note } = req.body;
+    const cadetUser = isMockMode()
+      ? mockDb.users.find(u => u._id === req.user.id)
+      : null;
+
+    const submission = {
+      cadet: req.user.id,
+      cadetName: cadetUser?.name || req.user.name || 'Cadet',
+      submittedAt: new Date(),
+      mapState: { markers: markers || [], paths: paths || [] },
+      note: note || ''
+    };
+
+    if (isMockMode()) {
+      const session = mockDb.sessions.find(s => s._id === req.params.id);
+      if (!session) return res.status(404).json({ message: 'Session not found' });
+      if (!session.submissions) session.submissions = [];
+      // Replace existing submission from this cadet if any
+      session.submissions = session.submissions.filter(s => s.cadet !== req.user.id);
+      session.submissions.push(submission);
+      return res.status(200).json({ message: 'Answer submitted successfully!', submission });
+    }
+
+    // MongoDB mode
+    const session = await Session.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { submissions: { cadet: req.user.id } } },
+      { new: true }
+    );
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    await Session.findByIdAndUpdate(
+      req.params.id,
+      { $push: { submissions: submission } }
+    );
+    res.status(200).json({ message: 'Answer submitted successfully!', submission });
+  } catch (error) {
+    res.status(500).json({ message: 'Error submitting answer', error: error.message });
+  }
+};
+
+exports.getSubmissions = async (req, res) => {
+  try {
+    if (isMockMode()) {
+      const session = mockDb.sessions.find(s => s._id === req.params.id);
+      if (!session) return res.status(404).json({ message: 'Session not found' });
+      return res.status(200).json({ submissions: session.submissions || [] });
+    }
+    const session = await Session.findById(req.params.id).populate('submissions.cadet', 'name');
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.status(200).json({ submissions: session.submissions || [] });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching submissions', error: error.message });
+  }
+};

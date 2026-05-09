@@ -7,5 +7,7 @@ router.post('/create', protect, authorize('accessor'), sessionController.createS
 router.post('/join', protect, sessionController.joinSession);
 router.get('/my-sessions', protect, authorize('accessor'), sessionController.getAccessorSessions);
 router.get('/:id', protect, sessionController.getSessionById);
+router.post('/:id/submit', protect, authorize('cadet'), sessionController.submitAnswer);
+router.get('/:id/submissions', protect, authorize('accessor'), sessionController.getSubmissions);
 
 module.exports = router;
