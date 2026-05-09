@@ -1,48 +1,167 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CreateSessionWizard from '../../components/CreateSessionWizard';
+import SCENARIO_TEMPLATES from '../../data/scenarioTemplates';
 
-// Mini SVG map that renders a cadet's submitted markers and paths
-function SubmissionMap({ markers = [], paths = [] }) {
+// Reuse the element renderer from PlanningMap (simplified inline version)
+function renderSubmissionElement(el, idx) {
+  switch (el.type) {
+    case 'zone':
+      return (
+        <g key={idx}>
+          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx={8} fill={el.fill || '#7c6a4a'} opacity={0.8} />
+          {el.label && <text x={el.x + el.w / 2} y={el.y + (el.labelY || -8)} textAnchor="middle" fill="#f3f4f6" fontSize="13" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'road':
+      return <rect key={idx} x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? (el.width || 18) : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? (el.width || 18) : Math.abs(el.y2 - el.y1)} fill="#6b7280" />;
+    case 'house':
+      return (
+        <g key={idx}>
+          <rect x={el.x} y={el.y} width="40" height="38" rx="4" fill="#8b7355" stroke="#a0856e" strokeWidth="1.5" />
+          <polygon points={`${el.x},${el.y} ${el.x+40},${el.y} ${el.x+20},${el.y-16}`} fill="#6b5a3a" />
+        </g>
+      );
+    case 'fire':
+      return (
+        <g key={idx}>
+          <ellipse cx={el.x} cy={el.y} rx="18" ry="22" fill="#ff4500" opacity="0.7" />
+          <ellipse cx={el.x} cy={el.y} rx="10" ry="14" fill="#ffcc00" opacity="0.8" />
+          <text x={el.x} y={el.y + 3} textAnchor="middle" fontSize="18">🔥</text>
+        </g>
+      );
+    case 'river':
+      return (
+        <g key={idx}>
+          <path d={el.path} stroke="#1e90ff" strokeWidth="30" fill="none" opacity="0.7" strokeLinecap="round" />
+          {el.label && <text x={el.labelX || 400} y={el.labelY || 200} textAnchor="middle" fill="#93c5fd" fontSize="12" fontWeight="bold" transform={el.labelRotate ? `rotate(${el.labelRotate},${el.labelX},${el.labelY})` : undefined}>{el.label}</text>}
+        </g>
+      );
+    case 'track':
+      return (
+        <g key={idx}>
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#374151" strokeWidth="12" strokeDasharray="20,8" />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#9ca3af" strokeWidth="3" strokeDasharray="4,24" strokeDashoffset="14" />
+          <text x={(el.x1 + el.x2) / 2 + 200} y={(el.y1 + el.y2) / 2 + 10} fill="#f3f4f6" fontSize="12" fontWeight="bold">🚂 TRAIN TRACK</text>
+        </g>
+      );
+    case 'danger_zone':
+      return (
+        <g key={idx}>
+          <ellipse cx={el.cx} cy={el.cy} rx={el.rx} ry={el.ry} fill="#ef4444" opacity="0.5" />
+          <text x={el.cx} y={el.cy + 4} textAnchor="middle" fontSize="11" fill="#fca5a5" fontWeight="bold">{el.label}</text>
+        </g>
+      );
+    case 'vehicle':
+      return (
+        <g key={idx}>
+          <text x={el.x} y={el.y} textAnchor="middle" fontSize="28">{el.icon}</text>
+          {el.sublabel && <text x={el.x} y={el.y + 15} textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="bold">{el.sublabel}</text>}
+        </g>
+      );
+    case 'building':
+      return (
+        <g key={idx}>
+          <rect x={el.x} y={el.y} width={el.w || 80} height={el.h || 60} rx="4" fill={el.fill || '#8b7355'} stroke="#a0856e" strokeWidth="1.5" />
+          {el.label && <text x={el.x + (el.w || 80) / 2} y={el.y - 8} textAnchor="middle" fill="#f3f4f6" fontSize="11" fontWeight="bold">{el.label}</text>}
+          {el.sublabel && <text x={el.x + (el.w || 80) / 2} y={el.y + (el.h || 60) / 2 + 4} textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">{el.sublabel}</text>}
+        </g>
+      );
+    case 'poi':
+      return (
+        <g key={idx}>
+          <text x={el.x} y={el.y} textAnchor="middle" fontSize="22">{el.icon}</text>
+          {el.label && <text x={el.x} y={el.y + 18} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'flood_zone':
+      return (
+        <g key={idx}>
+          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx="8" fill="rgba(30,144,255,0.25)" stroke="#1e90ff" strokeWidth="2" strokeDasharray="8,4" />
+          {el.label && <text x={el.x + el.w / 2} y={el.y + el.h / 2} textAnchor="middle" fill="#93c5fd" fontSize="14" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'bridge':
+      return (
+        <g key={idx}>
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#ef4444" strokeWidth="6" strokeDasharray="6,6" />
+          {el.label && <text x={(el.x1 + el.x2) / 2} y={el.y1 - 8} textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'border_fence':
+      return (
+        <g key={idx}>
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#f59e0b" strokeWidth="4" strokeDasharray="12,6" />
+          <line x1={el.x1} y1={el.y1 - 1} x2={el.x2} y2={el.y2 - 1} stroke="#fbbf24" strokeWidth="1" />
+        </g>
+      );
+    case 'label':
+      return <text key={idx} x={el.x} y={el.y} textAnchor="middle" fill={el.color || '#ccc'} fontSize="11" fontWeight="bold" letterSpacing="0.1em">{el.text}</text>;
+    case 'checkpoint':
+      return (
+        <g key={idx}>
+          <rect x={el.x - 15} y={el.y - 10} width="30" height="20" rx="3" fill="#f59e0b" opacity="0.8" />
+          <text x={el.x} y={el.y - 15} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>
+        </g>
+      );
+    case 'threat':
+      return (
+        <g key={idx}>
+          <circle cx={el.x} cy={el.y} r="20" fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
+          <text x={el.x} y={el.y + 5} textAnchor="middle" fontSize="18">{el.icon}</text>
+          {el.label && <text x={el.x} y={el.y + 28} textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
+          {el.sublabel && <text x={el.x} y={el.y + 38} textAnchor="middle" fill="#ef4444" fontSize="8">{el.sublabel}</text>}
+        </g>
+      );
+    case 'vegetation':
+      return (
+        <g key={idx}>
+          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx="6" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1" strokeDasharray="4,4" />
+          {el.label && <text x={el.x + el.w / 2} y={el.y + el.h / 2 + 4} textAnchor="middle" fill="#86efac" fontSize="10">{el.label}</text>}
+        </g>
+      );
+    case 'collapsed':
+      return (
+        <g key={idx}>
+          <rect x={el.x} y={el.y} width="60" height="50" rx="3" fill="#78716c" stroke="#ef4444" strokeWidth="2" />
+          <line x1={el.x} y1={el.y} x2={el.x + 60} y2={el.y + 50} stroke="#ef4444" strokeWidth="2" />
+          <line x1={el.x + 60} y1={el.y} x2={el.x} y2={el.y + 50} stroke="#ef4444" strokeWidth="2" />
+          {el.label && <text x={el.x + 30} y={el.y - 6} textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'hazard':
+      return (
+        <g key={idx}>
+          <circle cx={el.x} cy={el.y} r="30" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" strokeWidth="2" strokeDasharray="6,3" />
+          <text x={el.x} y={el.y + 5} textAnchor="middle" fontSize="22">{el.icon}</text>
+          {el.label && <text x={el.x} y={el.y + 30} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>}
+          {el.sublabel && <text x={el.x} y={el.y + 42} textAnchor="middle" fill="#f59e0b" fontSize="8">{el.sublabel}</text>}
+        </g>
+      );
+    case 'road_blocked':
+      return (
+        <g key={idx}>
+          <rect x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? 20 : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? 20 : Math.abs(el.y2 - el.y1)} fill="#6b7280" />
+          <rect x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? 20 : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? 20 : Math.abs(el.y2 - el.y1)} fill="rgba(239,68,68,0.3)" />
+          {el.label && <text x={(el.x1 + el.x2) / 2 + 15} y={(el.y1 + el.y2) / 2} fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    default:
+      return null;
+  }
+}
+
+// Mini SVG map that renders a cadet's submitted markers and paths with scenario backdrop
+function SubmissionMap({ markers = [], paths = [], scenarioId }) {
   const W = 800, H = 550;
+  const template = SCENARIO_TEMPLATES[scenarioId] || SCENARIO_TEMPLATES['village_fire'];
   return (
-    <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: '#3d6b47', display: 'flex', alignItems: 'center' }}>
+    <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: template.terrain || '#3d6b47', display: 'flex', alignItems: 'center' }}>
       <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
-        {/* Terrain */}
-        <rect x="0" y="0" width={W} height={H} fill="#3d6b47" />
+        <rect x="0" y="0" width={W} height={H} fill={template.terrain || '#3d6b47'} />
 
-        {/* Village */}
-        <rect x="80" y="80" width="320" height="280" rx="8" fill="#7c6a4a" opacity="0.8" />
-        <text x="240" y="72" textAnchor="middle" fill="#f3f4f6" fontSize="13" fontWeight="bold">🏘 VILLAGE</text>
-
-        {/* Roads */}
-        <rect x="0" y="195" width={W} height="18" fill="#6b7280" />
-        <rect x="240" y="0" width="18" height={H} fill="#6b7280" />
-
-        {/* Houses */}
-        {[[100,100],[160,100],[220,100],[100,170],[160,170],[220,170],[100,240],[160,240],[220,240]].map(([hx,hy],i) => (
-          <g key={i}>
-            <rect x={hx} y={hy} width="40" height="38" rx="4" fill="#8b7355" stroke="#a0856e" strokeWidth="1.5"/>
-            <polygon points={`${hx},${hy} ${hx+40},${hy} ${hx+20},${hy-16}`} fill="#6b5a3a"/>
-          </g>
-        ))}
-
-        {/* Fires */}
-        {[[100,100],[160,100],[100,170]].map(([fx,fy],i) => (
-          <g key={i}>
-            <ellipse cx={fx+20} cy={fy-5} rx="18" ry="22" fill="#ff4500" opacity="0.7"/>
-            <text x={fx+20} y={fy-2} textAnchor="middle" fontSize="18">🔥</text>
-          </g>
-        ))}
-
-        {/* River */}
-        <path d={`M 500 0 Q 520 120 490 200 Q 460 280 510 ${H}`} stroke="#1e90ff" strokeWidth="30" fill="none" opacity="0.7" strokeLinecap="round"/>
-
-        {/* Train track */}
-        <line x1="0" y1="460" x2={W} y2="400" stroke="#374151" strokeWidth="12" strokeDasharray="20,8"/>
-        <text x="640" y="450" fill="#f3f4f6" fontSize="12" fontWeight="bold">🚂 TRAIN TRACK</text>
-        <ellipse cx="350" cy="440" rx="40" ry="20" fill="#ef4444" opacity="0.5"/>
-        <text x="350" y="444" textAnchor="middle" fontSize="11" fill="#fca5a5" fontWeight="bold">⚠ DAMAGED</text>
-        <text x="720" y="430" textAnchor="middle" fontSize="28">🚂</text>
+        {/* Scenario backdrop (faded) */}
+        {template.elements.map((el, idx) => renderSubmissionElement(el, idx))}
 
         {/* Arrow def */}
         <defs>
@@ -53,15 +172,8 @@ function SubmissionMap({ markers = [], paths = [] }) {
 
         {/* ===== CADET'S SUBMITTED PATHS ===== */}
         {paths.map((path, idx) => (
-          <polyline
-            key={idx}
-            points={(path.points || []).map(p => `${p.x},${p.y}`).join(' ')}
-            stroke={path.color || '#22d3ee'}
-            strokeWidth="3"
-            fill="none"
-            strokeDasharray="8,4"
-            markerEnd="url(#sub-arrow)"
-          />
+          <polyline key={idx} points={(path.points || []).map(p => `${p.x},${p.y}`).join(' ')}
+            stroke={path.color || '#22d3ee'} strokeWidth="3" fill="none" strokeDasharray="8,4" markerEnd="url(#sub-arrow)" />
         ))}
 
         {/* ===== CADET'S SUBMITTED MARKERS ===== */}
@@ -79,26 +191,19 @@ function SubmissionMap({ markers = [], paths = [] }) {
 
 export default function AccessorPortal() {
   const navigate = useNavigate();
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
-  const [formData, setFormData] = useState({
-    problemDescription: '',
-    timeLimit: 30,
-    volunteers: 4,
-    fireTrucks: 1,
-    waterPumps: 1
-  });
 
   // Load existing sessions on mount
   useEffect(() => {
     const fetchSessions = async () => {
       try {
         const response = await fetch('http://localhost:5000/api/sessions/my-sessions', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
         });
         const data = await response.json();
         if (response.ok) setSessions(data.sessions || []);
@@ -109,34 +214,9 @@ export default function AccessorPortal() {
     fetchSessions();
   }, []);
 
-  const handleCreateSession = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch('http://localhost:5000/api/sessions/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          problemDescription: formData.problemDescription,
-          timeLimit: formData.timeLimit,
-          assignedResources: {
-            volunteers: formData.volunteers,
-            fireTrucks: formData.fireTrucks,
-            waterPumps: formData.waterPumps
-          }
-        })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setSessions([data.session, ...sessions]);
-        setShowCreateForm(false);
-        setFormData({ problemDescription: '', timeLimit: 30, volunteers: 4, fireTrucks: 1, waterPumps: 1 });
-      }
-    } catch (error) {
-      console.error('Error creating session:', error);
-    }
+  const handleSessionCreated = (session) => {
+    setSessions([session, ...sessions]);
+    setShowCreateWizard(false);
   };
 
   const handleDeleteSession = async (sessionId) => {
@@ -144,7 +224,7 @@ export default function AccessorPortal() {
     try {
       const response = await fetch(`http://localhost:5000/api/sessions/${sessionId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       if (response.ok) {
         setSessions(sessions.filter(s => s._id !== sessionId));
@@ -165,7 +245,7 @@ export default function AccessorPortal() {
     setExpandedSubmission(null);
     try {
       const response = await fetch(`http://localhost:5000/api/sessions/${session._id}/submissions`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       const data = await response.json();
       if (response.ok) setSubmissions(data.submissions || []);
@@ -189,40 +269,15 @@ export default function AccessorPortal() {
           <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>Accessor Portal</h1>
           <p style={{ color: 'var(--gray-400)' }}>Create exercises, share codes, and review cadet submissions</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowCreateForm(true)}>+ New Exercise Session</button>
+        <button className="btn btn-primary" onClick={() => setShowCreateWizard(true)}>+ New Exercise Session</button>
       </div>
 
-      {/* Create Session Form */}
-      {showCreateForm && (
-        <div className="card" style={{ maxWidth: '600px' }}>
-          <h2 className="card-title" style={{ marginBottom: '1rem' }}>Create New Session</h2>
-          <form onSubmit={handleCreateSession} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--gray-400)', marginBottom: '0.3rem' }}>Problem Description (Situation)</label>
-              <textarea className="input" rows="4" value={formData.problemDescription}
-                onChange={(e) => setFormData({...formData, problemDescription: e.target.value})}
-                placeholder="Explain the village fire scenario, train approach, etc." required />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              {[
-                { key: 'timeLimit', label: 'Time Limit (Minutes)' },
-                { key: 'fireTrucks', label: 'Fire Trucks' },
-                { key: 'volunteers', label: 'Volunteers' },
-                { key: 'waterPumps', label: 'Water Pumps' },
-              ].map(({ key, label }) => (
-                <div key={key}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--gray-400)', marginBottom: '0.3rem' }}>{label}</label>
-                  <input type="number" className="input" value={formData[key]}
-                    onChange={(e) => setFormData({...formData, [key]: parseInt(e.target.value) || 0})} />
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-              <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Create & Generate Code</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowCreateForm(false)}>Cancel</button>
-            </div>
-          </form>
-        </div>
+      {/* Create Session Wizard */}
+      {showCreateWizard && (
+        <CreateSessionWizard
+          onCreated={handleSessionCreated}
+          onCancel={() => setShowCreateWizard(false)}
+        />
       )}
 
       {/* Sessions List */}
@@ -245,21 +300,37 @@ export default function AccessorPortal() {
                     }}>{session.sessionCode}</span>
                     <button onClick={() => copyCode(session.sessionCode)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }} title="Copy code">📋</button>
+                    <span style={{
+                      background: session.phase === 'waiting' ? 'rgba(245,158,11,0.15)' : session.phase === 'completed' ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)',
+                      color: session.phase === 'waiting' ? 'var(--warning)' : session.phase === 'completed' ? 'var(--success)' : 'var(--primary)',
+                      padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase'
+                    }}>{session.phase || 'waiting'}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>👥 {session.participants?.length || 0}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/simulation?sessionId=${session._id}`)}>🗺 Map</button>
+                    <button className="btn btn-sm btn-success" onClick={() => navigate(`/simulation?sessionId=${session._id}`)}>▶ Enter Session</button>
                     <button className="btn btn-sm btn-primary" onClick={() => fetchSubmissions(session)}>📥 Submissions</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDeleteSession(session._id)}>🗑</button>
                   </div>
                 </div>
+                {session.title && (
+                  <p style={{ color: 'var(--gray-200)', fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.25rem' }}>{session.title}</p>
+                )}
                 <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem' }}>
                   {session.problemDescription?.substring(0, 80)}{session.problemDescription?.length > 80 ? '...' : ''}
                 </p>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--gray-500)' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--gray-500)', alignItems: 'center' }}>
                   <span>⏱ {session.timeLimit} min</span>
                   <span>🚒 {session.assignedResources?.fireTrucks || 0}</span>
                   <span>👥 {session.assignedResources?.volunteers || 0}</span>
                   <span>💧 {session.assignedResources?.waterPumps || 0}</span>
+                  {session.difficulty && (
+                    <span style={{
+                      padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase',
+                      background: session.difficulty === 'hard' ? 'rgba(239,68,68,0.15)' : session.difficulty === 'medium' ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
+                      color: session.difficulty === 'hard' ? 'var(--danger)' : session.difficulty === 'medium' ? 'var(--warning)' : 'var(--success)'
+                    }}>{session.difficulty}</span>
+                  )}
                 </div>
               </div>
             ))
@@ -376,7 +447,65 @@ export default function AccessorPortal() {
                       <SubmissionMap
                         markers={sub.mapState?.markers || []}
                         paths={sub.mapState?.paths || []}
+                        scenarioId={selectedSession?.scenarioId}
                       />
+                      {/* Detailed OLQ Report */}
+                      {sub.olqAnalysis && (
+                        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '0.5rem', borderBottom: '1px solid var(--gray-700)', paddingBottom: '0.5rem' }}>
+                            AI Performance Analysis
+                          </h3>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            <div className="card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.05))', border: '1px solid rgba(59,130,246,0.3)', padding: '1rem' }}>
+                              <p style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Overall Score</p>
+                              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>
+                                {sub.olqAnalysis.overallScore} <span style={{ fontSize: '1rem', color: 'var(--gray-500)' }}>/ 10</span>
+                              </div>
+                            </div>
+                            
+                            <div className="card" style={{ padding: '1rem' }}>
+                              <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Top Strengths</p>
+                              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', margin: 0, padding: 0, listStyle: 'none', fontSize: '0.8rem' }}>
+                                {sub.olqAnalysis.strengths?.map((s, i) => (
+                                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
+                                    <span>✓ {s.name}</span>
+                                    <strong>{s.score}</strong>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div className="card" style={{ padding: '1rem' }}>
+                              <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Areas for Growth</p>
+                              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', margin: 0, padding: 0, listStyle: 'none', fontSize: '0.8rem' }}>
+                                {sub.olqAnalysis.improvements?.map((s, i) => (
+                                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--warning)' }}>
+                                    <span>⚠ {s.name}</span>
+                                    <strong>{s.score}</strong>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+
+                          <div className="card" style={{ padding: '1rem' }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '1rem' }}>Detailed OLQ Rubric Breakdown</h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.75rem' }}>
+                              {sub.olqAnalysis.details?.map((detail, i) => (
+                                <div key={i} style={{ padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem', borderLeft: `3px solid ${detail.score >= 8 ? 'var(--success)' : detail.score >= 5 ? 'var(--primary)' : 'var(--danger)'}` }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                    <span style={{ fontWeight: 'bold', color: 'var(--gray-200)', fontSize: '0.85rem' }}>{detail.name}</span>
+                                    <span style={{ fontSize: '1rem', fontWeight: 'bold', color: detail.score >= 8 ? 'var(--success)' : detail.score >= 5 ? 'var(--primary)' : 'var(--danger)' }}>
+                                      {detail.score}
+                                    </span>
+                                  </div>
+                                  <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', lineHeight: '1.4' }}>{detail.evidence}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

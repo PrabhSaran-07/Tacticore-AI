@@ -1,10 +1,5 @@
 const Session = require('../models/Session');
 const crypto = require('crypto');
-const mongoose = require('mongoose');
-const mockDb = require('../services/mockDatabase');
-
-// Helper to determine if we are in mock mode
-const isMockMode = () => mongoose.connection.readyState !== 1;
 
 // Generate unique 6-character session code
 const generateSessionCode = () => {
@@ -13,28 +8,15 @@ const generateSessionCode = () => {
 
 exports.createSession = async (req, res) => {
   try {
-    const { problemDescription, assignedResources, timeLimit, optimumSolution } = req.body;
+    const {
+      title, scenarioId, problemDescription, difficulty,
+      assignedResources, constraints, problems,
+      timeLimit, phaseDurations,
+      groupConfig, evalWeights, customRubric,
+      optimumSolution
+    } = req.body;
+
     let sessionCode = generateSessionCode();
-
-    if (isMockMode()) {
-      const accessorUser = mockDb.users.find(u => u._id === req.user.id);
-      const session = {
-        _id: String(mockDb.sessions.length + 1),
-        sessionCode,
-        accessor: { _id: req.user.id, name: accessorUser?.name || 'Accessor' },
-        problemDescription,
-        assignedResources,
-        timeLimit,
-        optimumSolution,
-        status: 'waiting',
-        participants: [],
-        createdAt: new Date()
-      };
-      mockDb.sessions.push(session);
-      return res.status(201).json({ session });
-    }
-
-    // MongoDB Mode
     let isUnique = false;
     while (!isUnique) {
       const existing = await Session.findOne({ sessionCode });
@@ -45,11 +27,21 @@ exports.createSession = async (req, res) => {
     const session = new Session({
       sessionCode,
       accessor: req.user.id,
+      title: title || '',
+      scenarioId: scenarioId || 'village_fire',
       problemDescription,
+      difficulty: difficulty || 'medium',
       assignedResources,
+      constraints,
+      problems: problems || [],
       timeLimit,
+      phaseDurations,
+      groupConfig,
+      evalWeights,
+      customRubric,
       optimumSolution,
-      status: 'waiting'
+      status: 'waiting',
+      phase: 'waiting'
     });
 
     await session.save();
@@ -62,25 +54,13 @@ exports.createSession = async (req, res) => {
 exports.joinSession = async (req, res) => {
   try {
     const { sessionCode } = req.body;
-    
-    if (isMockMode()) {
-      const session = mockDb.sessions.find(s => s.sessionCode === sessionCode.toUpperCase());
-      if (!session) return res.status(404).json({ message: 'Session not found' });
-      
-      if (!session.participants.includes(req.user.id)) {
-        session.participants.push(req.user.id);
-      }
-      return res.status(200).json({ session });
-    }
-
-    // MongoDB Mode
     const session = await Session.findOne({ sessionCode: sessionCode.toUpperCase() })
       .populate('accessor', 'name')
-      .populate('scenario');
+      .populate('participants', 'name chestNo batch');
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    if (!session.participants.includes(req.user.id)) {
+    if (!session.participants.some(p => p._id.toString() === req.user.id)) {
       session.participants.push(req.user.id);
       await session.save();
     }
@@ -91,13 +71,86 @@ exports.joinSession = async (req, res) => {
   }
 };
 
+// ── Start Session (Accessor only) ──
+exports.startSession = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (session.accessor.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Only the session creator can start it' });
+    }
+    if (session.phase !== 'waiting') {
+      return res.status(400).json({ message: 'Session has already been started' });
+    }
+
+    session.phase = 'group_discussion';
+    session.status = 'active';
+    session.startedAt = new Date();
+    await session.save();
+
+    // Broadcast to all connected clients in this session
+    const io = req.app.get('io');
+    if (io) {
+      io.to(session._id.toString()).emit('sessionPhaseChange', {
+        phase: session.phase,
+        status: session.status,
+        startedAt: session.startedAt
+      });
+    }
+
+    res.status(200).json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Error starting session', error: error.message });
+  }
+};
+
+// ── End Session (Accessor only) ──
+exports.endSession = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (session.accessor.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Only the session creator can end it' });
+    }
+
+    session.phase = 'completed';
+    session.status = 'completed';
+    session.endedAt = new Date();
+    await session.save();
+
+    // Broadcast to all connected clients
+    const io = req.app.get('io');
+    if (io) {
+      io.to(session._id.toString()).emit('sessionPhaseChange', {
+        phase: 'completed',
+        status: 'completed',
+        endedAt: session.endedAt
+      });
+    }
+
+    res.status(200).json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Error ending session', error: error.message });
+  }
+};
+
+// ── Get session participants ──
+exports.getSessionParticipants = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id)
+      .populate('participants', 'name chestNo batch cadetType');
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.status(200).json({ participants: session.participants });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching participants', error: error.message });
+  }
+};
+
 exports.getAccessorSessions = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const sessions = mockDb.sessions.filter(s => s.accessor._id === req.user.id);
-      return res.status(200).json({ sessions });
-    }
-    const sessions = await Session.find({ accessor: req.user.id }).sort({ createdAt: -1 });
+    const sessions = await Session.find({ accessor: req.user.id })
+      .populate('participants', 'name chestNo batch')
+      .sort({ createdAt: -1 });
     res.status(200).json({ sessions });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching sessions', error: error.message });
@@ -106,15 +159,10 @@ exports.getAccessorSessions = async (req, res) => {
 
 exports.getSessionById = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const session = mockDb.sessions.find(s => s._id === req.params.id);
-      if (!session) return res.status(404).json({ message: 'Session not found' });
-      return res.status(200).json({ session });
-    }
     const session = await Session.findById(req.params.id)
       .populate('accessor', 'name')
-      .populate('participants', 'name');
-    
+      .populate('participants', 'name chestNo batch cadetType');
+
     if (!session) return res.status(404).json({ message: 'Session not found' });
     res.status(200).json({ session });
   } catch (error) {
@@ -126,22 +174,16 @@ exports.submitAnswer = async (req, res) => {
   try {
     const { markers, paths, note } = req.body;
     const { analyzeSubmission } = require('../services/olqAnalyzer');
-    
-    let session;
-    let cadetUser;
-    
-    if (isMockMode()) {
-      session = mockDb.sessions.find(s => s._id === req.params.id);
-      cadetUser = mockDb.users.find(u => u._id === req.user.id);
-    } else {
-      session = await Session.findById(req.params.id);
-    }
 
+    const session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    const User = require('../models/User');
+    const cadet = await User.findById(req.user.id);
 
     const submissionData = {
       cadet: req.user.id,
-      cadetName: cadetUser?.name || req.user.name || 'Cadet',
+      cadetName: cadet ? `${cadet.chestNo} - ${cadet.name}` : 'Cadet',
       submittedAt: new Date(),
       mapState: { markers: markers || [], paths: paths || [] },
       note: note || ''
@@ -151,24 +193,16 @@ exports.submitAnswer = async (req, res) => {
     const olqAnalysis = analyzeSubmission(submissionData, session);
     submissionData.olqAnalysis = olqAnalysis;
 
-    if (isMockMode()) {
-      if (!session.submissions) session.submissions = [];
-      session.submissions = session.submissions.filter(s => s.cadet !== req.user.id);
-      session.submissions.push(submissionData);
-      return res.status(200).json({ message: 'Answer submitted successfully!', submission: submissionData });
-    }
-
-    // MongoDB mode
+    // Remove old submission from this cadet, add new
     await Session.findByIdAndUpdate(
       req.params.id,
-      { $pull: { submissions: { cadet: req.user.id } } },
-      { new: true }
+      { $pull: { submissions: { cadet: req.user.id } } }
     );
-
     await Session.findByIdAndUpdate(
       req.params.id,
       { $push: { submissions: submissionData } }
     );
+
     res.status(200).json({ message: 'Answer submitted successfully!', submission: submissionData });
   } catch (error) {
     res.status(500).json({ message: 'Error submitting answer', error: error.message });
@@ -178,12 +212,7 @@ exports.submitAnswer = async (req, res) => {
 exports.getSubmissions = async (req, res) => {
   try {
     const { analyzeSubmission } = require('../services/olqAnalyzer');
-    let session;
-    if (isMockMode()) {
-      session = mockDb.sessions.find(s => s._id === req.params.id);
-    } else {
-      session = await Session.findById(req.params.id).populate('submissions.cadet', 'name');
-    }
+    const session = await Session.findById(req.params.id).populate('submissions.cadet', 'name chestNo');
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
@@ -196,10 +225,7 @@ exports.getSubmissions = async (req, res) => {
           updated = true;
         }
       });
-      
-      if (updated && !isMockMode()) {
-        await session.save();
-      }
+      if (updated) await session.save();
     }
 
     res.status(200).json({ submissions: session.submissions || [] });
@@ -210,12 +236,6 @@ exports.getSubmissions = async (req, res) => {
 
 exports.deleteSession = async (req, res) => {
   try {
-    if (isMockMode()) {
-      const idx = mockDb.sessions.findIndex(s => s._id === req.params.id);
-      if (idx === -1) return res.status(404).json({ message: 'Session not found' });
-      mockDb.sessions.splice(idx, 1);
-      return res.status(200).json({ message: 'Session deleted successfully' });
-    }
     const session = await Session.findByIdAndDelete(req.params.id);
     if (!session) return res.status(404).json({ message: 'Session not found' });
     res.status(200).json({ message: 'Session deleted successfully' });
@@ -227,27 +247,19 @@ exports.deleteSession = async (req, res) => {
 exports.getMyResults = async (req, res) => {
   try {
     const { analyzeSubmission } = require('../services/olqAnalyzer');
-    let sessions = [];
-    if (isMockMode()) {
-      sessions = mockDb.sessions;
-    } else {
-      sessions = await Session.find({ 'submissions.cadet': req.user.id });
-    }
+    const sessions = await Session.find({ 'submissions.cadet': req.user.id });
 
     const results = [];
     for (let session of sessions) {
       let submission = session.submissions.find(s => String(s.cadet) === String(req.user.id));
       if (!submission) continue;
 
-      // Auto-analyze if missing (for older submissions)
       if (!submission.olqAnalysis) {
         submission.olqAnalysis = analyzeSubmission(submission, session);
-        if (!isMockMode()) {
-          await Session.updateOne(
-            { _id: session._id, 'submissions.cadet': req.user.id },
-            { $set: { 'submissions.$.olqAnalysis': submission.olqAnalysis } }
-          );
-        }
+        await Session.updateOne(
+          { _id: session._id, 'submissions.cadet': req.user.id },
+          { $set: { 'submissions.$.olqAnalysis': submission.olqAnalysis } }
+        );
       }
 
       results.push({
@@ -261,5 +273,16 @@ exports.getMyResults = async (req, res) => {
     res.status(200).json({ results });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching results', error: error.message });
+  }
+};
+
+// ── Get session replay (behavioral log) ──
+exports.getSessionReplay = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id).select('behavioralLog sessionCode title');
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.status(200).json({ replay: session.behavioralLog, sessionCode: session.sessionCode });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching replay', error: error.message });
   }
 };

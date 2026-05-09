@@ -29,8 +29,7 @@ const OLQ_CATEGORIES = {
   ],
   'Dynamic Qualities': [
     'Determination',
-    'Courage',
-    'Stamina'
+    'Courage'
   ]
 };
 
@@ -167,10 +166,6 @@ function analyzeSubmission(submission, sessionData) {
     3 + (fireProximityScore * 1) + (trainCoverage * 1.5) + (spatialSpread > 0.5 ? 2 : 0), 1, 10
   );
 
-  // Stamina: Thoroughness of solution
-  scores['Stamina'] = clamp(
-    2 + (totalMarkers * 0.4) + (totalPaths * 0.8) + (totalPathPoints * 0.2) + (noteLength > 30 ? 1.5 : 0), 1, 10
-  );
 
   // Round all scores
   Object.keys(scores).forEach(k => { scores[k] = Math.round(scores[k] * 10) / 10; });

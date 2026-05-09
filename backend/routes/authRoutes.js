@@ -1,9 +1,11 @@
 const express = require('express');
-const { login, register } = require('../controllers/authController');
+const { login, cadetJoin, me } = require('../controllers/authController');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.post('/login', login);
-router.post('/register', register);
+router.post('/cadet-join', cadetJoin);
+router.get('/me', protect, me);
 
 module.exports = router;
