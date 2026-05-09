@@ -105,25 +105,7 @@ export default function SimulationRoom() {
     }
   };
 
-  // === SAVE OPTIMUM SOLUTION (Accessor only) ===
-  const saveOptimumSolution = async () => {
-    if (!mapRef.current) return;
-    const { markers, paths } = mapRef.current.getMapState();
 
-    try {
-      const response = await fetch(`http://localhost:5000/api/sessions/${sessionId}/optimum`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ optimumSolution: { markers, paths } })
-      });
-      if (response.ok) alert('Optimum solution saved!');
-    } catch (err) {
-      console.error('Failed to save optimum solution:', err);
-    }
-  };
 
   if (!session) {
     return (
@@ -134,7 +116,7 @@ export default function SimulationRoom() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', height: 'calc(100vh - 8rem)', padding: '0.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', minHeight: 'calc(100vh - 8rem)', padding: '0.5rem' }}>
 
       {/* ===== BRIEFING MODAL ===== */}
       {showBriefing && (
@@ -268,12 +250,6 @@ export default function SimulationRoom() {
               📤 Submit Answer
             </button>
           )}
-          {/* Accessor: Save Optimum */}
-          {isAccessor && (
-            <button className="btn btn-primary" onClick={saveOptimumSolution}>
-              💾 Save Optimum Solution
-            </button>
-          )}
           {/* Accessor: Toggle Global Simulation State */}
           {isAccessor && (
             <button onClick={toggleSimulation} className={`btn ${isRunning ? 'btn-danger' : 'btn-success'}`}>
@@ -304,7 +280,7 @@ export default function SimulationRoom() {
       </div>
 
       {/* ===== MAP + SIDEBAR ===== */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', flex: 1, minHeight: '250px' }}>
         <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
           <PlanningMap ref={mapRef} roomId={sessionId} activeMode={activeMode} />
         </div>

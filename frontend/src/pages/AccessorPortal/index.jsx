@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 function SubmissionMap({ markers = [], paths = [] }) {
   const W = 800, H = 550;
   return (
-    <div style={{ width: '100%', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: '#3d6b47' }}>
-      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+    <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: '#3d6b47', display: 'flex', alignItems: 'center' }}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
         {/* Terrain */}
         <rect x="0" y="0" width={W} height={H} fill="#3d6b47" />
 
