@@ -4,7 +4,8 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SimulationRoom from './pages/SimulationRoom';
-import InstructorPanel from './pages/InstructorPanel';
+import AccessorPortal from './pages/AccessorPortal';
+import CadetPortal from './pages/CadetPortal';
 import ResultsPage from './pages/ResultsPage';
 
 // Protected Route Component
@@ -25,7 +26,8 @@ function App() {
               <Route path="/" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/simulation" element={<SimulationRoom />} />
-              <Route path="/instructor" element={<InstructorPanel />} />
+              <Route path="/accessor" element={<AccessorPortal />} />
+              <Route path="/cadet" element={<CadetPortal />} />
               <Route path="/results" element={<ResultsPage />} />
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </Routes>

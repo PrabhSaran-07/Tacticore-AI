@@ -7,10 +7,17 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path;
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const role = user.role || 'cadet';
+
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/simulation', label: 'Planning Room', icon: '📝' },
-    { path: '/instructor', label: 'Instructor', icon: '👨‍🏫' },
+    { 
+      path: role === 'accessor' ? '/accessor' : '/cadet', 
+      label: role === 'accessor' ? 'Accessor' : 'Cadet Portal', 
+      icon: '👨‍🏫' 
+    },
     { path: '/results', label: 'Results', icon: '📈' },
   ];
 
@@ -86,7 +93,7 @@ export default function Navbar() {
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 color: 'var(--gray-100)'
-              }}>Candidate</p>
+              }}>{role.charAt(0).toUpperCase() + role.slice(1)}</p>
               <p style={{
                 fontSize: '0.75rem',
                 color: 'var(--gray-400)'

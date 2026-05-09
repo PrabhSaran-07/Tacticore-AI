@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-export default function ResourcePanel() {
+export default function ResourcePanel({ resources: assignedResources }) {
   const [resources] = useState([
-    { name: 'Volunteers', current: 4, max: 4, icon: '👥' },
-    { name: 'Fire Truck', current: 1, max: 1, icon: '🚒' },
-    { name: 'Water Pump', current: 1, max: 1, icon: '💧' },
+    { name: 'Volunteers', current: assignedResources?.volunteers || 4, max: assignedResources?.volunteers || 4, icon: '👥' },
+    { name: 'Fire Truck', current: assignedResources?.fireTrucks || 1, max: assignedResources?.fireTrucks || 1, icon: '🚒' },
+    { name: 'Water Pump', current: assignedResources?.waterPumps || 1, max: assignedResources?.waterPumps || 1, icon: '💧' },
   ]);
 
   return (

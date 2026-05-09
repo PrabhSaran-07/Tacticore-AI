@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authRoutes');
 const scenarioRoutes = require('./routes/scenarioRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
 const evaluationRoutes = require('./routes/evaluationRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
 const collaborationSocket = require('./sockets/collaborationSocket');
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/scenarios', scenarioRoutes);
 app.use('/api/simulation', simulationRoutes);
 app.use('/api/evaluation', evaluationRoutes);
+app.use('/api/sessions', sessionRoutes);
 
 collaborationSocket(io);
 
