@@ -18,26 +18,19 @@ function App() {
   return (
     <Router>
       <div className="app-shell">
-        <Routes>
-          <Route path="/" element={<Login />} />
-        </Routes>
-        
-        {isAuthenticated && (
-          <>
-            <Navbar />
-            <main className="flex-1">
-              <div className="max-w-7xl mx-auto">
-                <Routes>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/simulation" element={<SimulationRoom />} />
-                  <Route path="/instructor" element={<InstructorPanel />} />
-                  <Route path="/results" element={<ResultsPage />} />
-                  <Route path="*" element={<Navigate to="/dashboard" />} />
-                </Routes>
-              </div>
-            </main>
-          </>
-        )}
+        {isAuthenticated && <Navbar />}
+        <main className="flex-1">
+          <div className="max-w-7xl mx-auto">
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/simulation" element={<SimulationRoom />} />
+              <Route path="/instructor" element={<InstructorPanel />} />
+              <Route path="/results" element={<ResultsPage />} />
+              <Route path="*" element={<Navigate to="/dashboard" />} />
+            </Routes>
+          </div>
+        </main>
       </div>
     </Router>
   );

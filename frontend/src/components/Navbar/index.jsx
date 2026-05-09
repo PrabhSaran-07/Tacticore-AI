@@ -9,7 +9,7 @@ export default function Navbar() {
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/simulation', label: 'Simulation', icon: '🎮' },
+    { path: '/simulation', label: 'Planning Room', icon: '📝' },
     { path: '/instructor', label: 'Instructor', icon: '👨‍🏫' },
     { path: '/results', label: 'Results', icon: '📈' },
   ];
@@ -53,11 +53,11 @@ export default function Navbar() {
                 fontWeight: 'bold',
                 color: 'white',
                 marginBottom: '0.125rem'
-              }}>TactiCore AI</h1>
+              }}>Planning AI</h1>
               <p style={{
                 fontSize: '0.75rem',
                 color: 'var(--primary)'
-              }}>Tactical Intelligence</p>
+              }}>Group Coordination</p>
             </div>
           </Link>
 
@@ -86,7 +86,7 @@ export default function Navbar() {
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 color: 'var(--gray-100)'
-              }}>Commander</p>
+              }}>Candidate</p>
               <p style={{
                 fontSize: '0.75rem',
                 color: 'var(--gray-400)'

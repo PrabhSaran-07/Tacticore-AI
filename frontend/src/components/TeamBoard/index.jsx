@@ -2,9 +2,9 @@ import { useState } from 'react';
 
 export default function TeamBoard() {
   const [units] = useState([
-    { id: 1, name: 'Alpha Squad', leader: 'Lt. Adams', strength: 10, morale: 'High', status: 'operational' },
-    { id: 2, name: 'Bravo Team', leader: 'Sgt. Chen', strength: 8, morale: 'Good', status: 'operational' },
-    { id: 3, name: 'Charlie Fire Team', leader: 'Cpl. Davis', strength: 6, morale: 'Good', status: 'ready' },
+    { id: 1, name: 'Planning Group 1', leader: 'Adams', strength: 10, morale: 'High', status: 'active' },
+    { id: 2, name: 'Planning Group 2', leader: 'Chen', strength: 8, morale: 'Good', status: 'active' },
+    { id: 3, name: 'Planning Group 3', leader: 'Davis', strength: 6, morale: 'Good', status: 'ready' },
   ]);
 
   return (
@@ -22,9 +22,9 @@ export default function TeamBoard() {
                 <p className="text-xs text-slate-400">{unit.leader}</p>
               </div>
               <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                unit.status === 'operational' ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'
+                unit.status === 'active' ? 'bg-green-900 text-green-200' : 'bg-yellow-900 text-yellow-200'
               }`}>
-                {unit.status === 'operational' ? '●' : '◐'} {unit.status}
+                {unit.status === 'active' ? '●' : '◐'} {unit.status.toUpperCase()}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs text-slate-400 mb-2">

@@ -4,10 +4,10 @@ export default function ResultsPage() {
   const [selectedMetric, setSelectedMetric] = useState('accuracy');
 
   const [analyticsData] = useState([
-    { scenario: 'Urban Combat', accuracy: 96.2, time: '45m 32s', score: 9850 },
-    { scenario: 'Mountain Terrain', accuracy: 92.1, time: '38m 15s', score: 8920 },
-    { scenario: 'Border Zone', accuracy: 94.5, time: '52m 08s', score: 9650 },
-    { scenario: 'Village Defense', accuracy: 91.8, time: '41m 22s', score: 8750 },
+    { scenario: 'Village Fire', accuracy: 96.2, time: '45m 32s', score: 9850 },
+    { scenario: 'Broken Bridge', accuracy: 92.1, time: '38m 15s', score: 8920 },
+    { scenario: 'Rescue Operation', accuracy: 94.5, time: '52m 08s', score: 9650 },
+    { scenario: 'Evacuation Plan', accuracy: 91.8, time: '41m 22s', score: 8750 },
   ]);
 
   const [aiMetrics] = useState({

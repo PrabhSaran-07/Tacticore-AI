@@ -2,48 +2,48 @@ import { useState } from 'react';
 
 export default function ResourcePanel() {
   const [resources] = useState([
-    { name: 'Personnel', current: 45, max: 50, icon: '👥' },
-    { name: 'Ammunition', current: 78, max: 100, icon: '💣' },
-    { name: 'Medical', current: 92, max: 100, icon: '🏥' },
-    { name: 'Fuel', current: 65, max: 100, icon: '⛽' },
+    { name: 'Volunteers', current: 4, max: 4, icon: '👥' },
+    { name: 'Fire Truck', current: 1, max: 1, icon: '🚒' },
+    { name: 'Water Pump', current: 1, max: 1, icon: '💧' },
   ]);
 
   return (
     <div className="card">
       <div className="card-header">
-        <h3 className="card-title">Resources</h3>
+        <h3 className="card-title">Available Resources</h3>
       </div>
       
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {resources.map((resource, idx) => (
           <div key={idx}>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-slate-300 flex items-center gap-2">
-                <span className="text-lg">{resource.icon}</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', marginBottom: '0.5rem' }}>
+              <label style={{ fontSize: '0.875rem', color: 'var(--gray-300)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.125rem' }}>{resource.icon}</span>
                 {resource.name}
               </label>
-              <span className="text-sm font-semibold text-blue-400">
+              <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--primary)' }}>
                 {resource.current}/{resource.max}
               </span>
             </div>
-            <div className="w-full bg-slate-700 rounded-full h-2">
+            <div style={{ width: '100%', background: 'var(--gray-700)', borderRadius: '9999px', height: '0.5rem' }}>
               <div 
-                className={`h-2 rounded-full transition-all ${
-                  resource.current / resource.max > 0.5 ? 'bg-green-500' :
-                  resource.current / resource.max > 0.25 ? 'bg-yellow-500' :
-                  'bg-red-500'
-                }`}
-                style={{ width: `${(resource.current / resource.max) * 100}%` }}
+                style={{ 
+                  height: '0.5rem', 
+                  borderRadius: '9999px', 
+                  transition: 'all 0.3s ease',
+                  width: `${(resource.current / resource.max) * 100}%`,
+                  background: 'var(--success)'
+                }}
               ></div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-slate-700">
-        <button className="btn btn-secondary w-full btn-sm">
-          ⚠️ Request Resupply
-        </button>
+      <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--gray-700)' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontStyle: 'italic' }}>
+          * Allocate resources via the Planning Map to coordinate the response.
+        </p>
       </div>
     </div>
   );

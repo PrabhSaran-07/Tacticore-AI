@@ -10,9 +10,9 @@ export default function Dashboard() {
   });
 
   const [recentActivities, setRecentActivities] = useState([
-    { id: 1, type: 'simulation', title: 'Urban Combat Training', time: '2 hours ago', status: 'completed' },
-    { id: 2, type: 'analysis', title: 'AI Model Evaluation', time: '4 hours ago', status: 'in-progress' },
-    { id: 3, type: 'simulation', title: 'Mountain Terrain Mission', time: '1 day ago', status: 'completed' },
+    { id: 1, type: 'planning', title: 'Village Fire Exercise', time: '2 hours ago', status: 'completed' },
+    { id: 2, type: 'analysis', title: 'Group Evaluation', time: '4 hours ago', status: 'in-progress' },
+    { id: 3, type: 'planning', title: 'Broken Bridge Exercise', time: '1 day ago', status: 'completed' },
   ]);
 
   useEffect(() => {
@@ -30,8 +30,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-100 mb-2">Command Dashboard</h1>
-        <p className="text-slate-400">Real-time tactical intelligence and simulation management</p>
+        <h1 className="text-4xl font-bold text-slate-100 mb-2">Planning Dashboard</h1>
+        <p className="text-slate-400">Real-time coordination and planning management</p>
       </div>
 
       <div className="grid-row">
@@ -69,12 +69,12 @@ export default function Dashboard() {
             fontWeight: '600',
             color: 'var(--gray-100)',
             marginBottom: '0.5rem'
-          }}>Start Simulation</h3>
+          }}>Start Planning</h3>
           <p style={{
             color: 'var(--gray-400)',
             fontSize: '0.875rem',
             marginBottom: '1rem'
-          }}>Launch a new tactical training scenario</p>
+          }}>Launch a new GPE planning scenario</p>
           <button className="btn btn-primary" style={{ width: '100%' }}>
             Launch
           </button>

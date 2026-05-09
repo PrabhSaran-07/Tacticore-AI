@@ -45,8 +45,8 @@ export default function Login() {
             fontWeight: 'bold',
             color: 'white',
             marginBottom: '0.5rem'
-          }}>TactiCore AI</h1>
-          <p style={{ color: 'var(--primary)' }}>Tactical Intelligence Platform</p>
+          }}>Planning AI</h1>
+          <p style={{ color: 'var(--primary)' }}>GPE Planning Platform</p>
         </div>
 
         {/* Login Card */}
@@ -64,7 +64,7 @@ export default function Login() {
               </label>
               <input
                 type="email"
-                placeholder="commander@tacticore.ai"
+                placeholder="candidate@planningai.ai"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{

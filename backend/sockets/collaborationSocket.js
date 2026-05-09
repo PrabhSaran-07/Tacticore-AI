@@ -11,7 +11,7 @@ module.exports = (io) => {
       io.to(message.roomId).emit('message', message);
     });
 
-    // Handle Map Marker Updates
+    // Handle Planning Resource Updates
     socket.on('mapUpdate', (data) => {
       // broadcast to everyone in the room except the sender
       socket.to(data.roomId).emit('mapUpdate', data);
