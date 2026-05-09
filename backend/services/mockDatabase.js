@@ -5,16 +5,16 @@ const mockDb = {
   users: [
     {
       _id: '1',
-      name: 'Admin User',
+      name: 'Senior Coordinator',
       email: 'admin@tacticore.com',
-      role: 'instructor',
+      role: 'accessor',
       createdAt: new Date()
     },
     {
       _id: '2',
-      name: 'Test Candidate',
-      email: 'candidate@tacticore.com',
-      role: 'candidate',
+      name: 'Test Cadet',
+      email: 'cadet@tacticore.com',
+      role: 'cadet',
       createdAt: new Date()
     }
   ],
@@ -38,7 +38,23 @@ const mockDb = {
       createdAt: new Date()
     }
   ],
-  sessions: [],
+  sessions: [
+    {
+      _id: 'default-session',
+      sessionCode: 'DEMO12',
+      accessor: { _id: '1', name: 'Senior Coordinator' },
+      problemDescription: 'Default village fire scenario. Please coordinate the response.',
+      assignedResources: {
+        volunteers: 4,
+        fireTrucks: 1,
+        waterPumps: 1
+      },
+      timeLimit: 30,
+      status: 'waiting',
+      participants: [],
+      createdAt: new Date()
+    }
+  ],
   results: []
 };
 

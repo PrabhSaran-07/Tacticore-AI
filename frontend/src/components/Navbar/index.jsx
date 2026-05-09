@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 
-export default function Navbar() {
+export default function Navbar({ onLogout }) {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -86,30 +86,34 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* User Info */}
+          {/* User Info + Logout */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ display: 'none', textAlign: 'right' }} className="sm:block">
-              <p style={{
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: 'var(--gray-100)'
-              }}>{role.charAt(0).toUpperCase() + role.slice(1)}</p>
-              <p style={{
-                fontSize: '0.75rem',
-                color: 'var(--gray-400)'
-              }}>Active</p>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--gray-100)' }}>
+                {user.name || 'User'}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--primary)', textTransform: 'capitalize' }}>
+                {role}
+              </p>
             </div>
             <div style={{
-              width: '2.5rem',
-              height: '2.5rem',
+              width: '2.5rem', height: '2.5rem',
               background: 'linear-gradient(135deg, var(--success) 0%, #059669 100%)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
               <span style={{ color: 'white', fontWeight: 'bold' }}>👤</span>
             </div>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  padding: '0.4rem 0.8rem', background: 'var(--gray-700)', border: '1px solid var(--gray-600)',
+                  borderRadius: '0.4rem', color: 'var(--gray-300)', cursor: 'pointer', fontSize: '0.75rem'
+                }}
+              >
+                Logout
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}

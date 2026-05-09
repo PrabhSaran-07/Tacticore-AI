@@ -23,18 +23,22 @@ export default function SimulationRoom() {
     // Fetch session data
     const fetchSession = async () => {
       try {
+        console.log('Fetching session for ID:', sessionId);
         const response = await fetch(`http://localhost:5000/api/sessions/${sessionId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         });
         const data = await response.json();
+        console.log('Session response:', data);
         if (response.ok) {
           setSession(data.session);
           setTime(data.session.timeLimit * 60 || 0);
+        } else {
+          console.error('Session fetch failed:', data.message);
         }
       } catch (err) {
-        console.error('Failed to fetch session:', err);
+        console.error('Network error fetching session:', err);
       }
     };
 
@@ -167,7 +171,7 @@ export default function SimulationRoom() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>Planning Room</h1>
-          <p style={{ color: 'var(--gray-400)', fontSize: '0.875rem' }}>Session: {session.sessionCode} | Accessor: {session.accessor?.name}</p>
+          <p style={{ color: 'var(--gray-400)', fontSize: '0.875rem' }}>Session: {session.sessionCode} | Assessor: {session.accessor?.name}</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {isAccessor && (
