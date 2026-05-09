@@ -9,5 +9,6 @@ router.get('/my-sessions', protect, authorize('accessor'), sessionController.get
 router.get('/:id', protect, sessionController.getSessionById);
 router.post('/:id/submit', protect, authorize('cadet'), sessionController.submitAnswer);
 router.get('/:id/submissions', protect, authorize('accessor'), sessionController.getSubmissions);
+router.delete('/:id', protect, authorize('accessor'), sessionController.deleteSession);
 
 module.exports = router;

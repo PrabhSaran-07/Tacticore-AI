@@ -179,3 +179,19 @@ exports.getSubmissions = async (req, res) => {
     res.status(500).json({ message: 'Error fetching submissions', error: error.message });
   }
 };
+
+exports.deleteSession = async (req, res) => {
+  try {
+    if (isMockMode()) {
+      const idx = mockDb.sessions.findIndex(s => s._id === req.params.id);
+      if (idx === -1) return res.status(404).json({ message: 'Session not found' });
+      mockDb.sessions.splice(idx, 1);
+      return res.status(200).json({ message: 'Session deleted successfully' });
+    }
+    const session = await Session.findByIdAndDelete(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    res.status(200).json({ message: 'Session deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting session', error: error.message });
+  }
+};
