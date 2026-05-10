@@ -230,7 +230,7 @@ const SCENARIO_TEMPLATES = {
       { color: '#8b7355', label: '🏕 Compound' },
       { color: '#22c55e', label: '🌲 Cover' },
     ],
-    defaultResources: { volunteers: 0, fireTrucks: 0, waterPumps: 0, customItems: [{ name: 'Assault Team', quantity: 2, capability: 'Tactical' }, { name: 'Sniper Unit', quantity: 1, capability: 'Overwatch' }] },
+    defaultResources: { volunteers: 4, fireTrucks: 1, waterPumps: 1, customItems: [{ name: 'Assault Team', quantity: 2, capability: 'Tactical' }, { name: 'Sniper Unit', quantity: 1, capability: 'Overwatch' }] },
     problems: [
       { description: 'Secure the perimeter and prevent hostiles from escaping', priority: 'critical' },
       { description: 'Rescue the hostages from the Main Lodge', priority: 'critical', isPrimary: true },
@@ -267,7 +267,7 @@ const SCENARIO_TEMPLATES = {
       { color: '#4a4a4a', label: '🏭 Industrial' },
       { color: '#7c7c6e', label: '🏘 Residential' },
     ],
-    defaultResources: { volunteers: 10, fireTrucks: 2, waterPumps: 0, customItems: [{ name: 'Hazmat Team', quantity: 2, capability: 'Containment' }, { name: 'Ambulance', quantity: 3, capability: 'Medical transport' }] },
+    defaultResources: { volunteers: 4, fireTrucks: 2, waterPumps: 0, customItems: [{ name: 'Hazmat Team', quantity: 2, capability: 'Containment' }, { name: 'Ambulance', quantity: 3, capability: 'Medical transport' }] },
     problems: [
       { description: 'Contain the toxic leak at the chemical plant', priority: 'critical', isPrimary: true },
       { description: 'Evacuate the school and residential colony before the gas reaches them', priority: 'critical' },
@@ -302,7 +302,7 @@ const SCENARIO_TEMPLATES = {
       { color: '#ef4444', label: '🚧 Blockage' },
       { color: '#4a5d3a', label: '🏕 Outpost' }
     ],
-    defaultResources: { volunteers: 6, fireTrucks: 0, waterPumps: 0, customItems: [{ name: 'Snowmobile', quantity: 2, capability: 'Mobility' }, { name: 'Thermal Scanner', quantity: 1, capability: 'Detection' }] },
+    defaultResources: { volunteers: 4, fireTrucks: 0, waterPumps: 0, customItems: [{ name: 'Snowmobile', quantity: 2, capability: 'Mobility' }, { name: 'Thermal Scanner', quantity: 1, capability: 'Detection' }] },
     problems: [
       { description: 'Locate and rescue passengers trapped in the buried bus', priority: 'critical', isPrimary: true },
       { description: 'Clear the debris blocking the supply route to the Army Post', priority: 'important' }
@@ -338,7 +338,7 @@ const SCENARIO_TEMPLATES = {
       { color: '#ef4444', label: '💥 Crash Zone' },
       { color: '#f59e0b', label: '⛽ Hazard' }
     ],
-    defaultResources: { volunteers: 8, fireTrucks: 2, waterPumps: 0, customItems: [{ name: 'Tow Truck', quantity: 2, capability: 'Clearance' }] },
+    defaultResources: { volunteers: 4, fireTrucks: 2, waterPumps: 0, customItems: [{ name: 'Tow Truck', quantity: 2, capability: 'Clearance' }] },
     problems: [
       { description: 'Extricate and treat casualties from the pileup', priority: 'critical', isPrimary: true },
       { description: 'Contain the fuel leak to prevent a massive explosion', priority: 'critical' },
@@ -372,7 +372,7 @@ const SCENARIO_TEMPLATES = {
       { color: '#6b7280', label: '🏢 Buildings' },
       { color: '#ef4444', label: '🥷 Hostiles' }
     ],
-    defaultResources: { volunteers: 0, fireTrucks: 2, waterPumps: 0, customItems: [{ name: 'SWAT Team', quantity: 3, capability: 'Assault' }, { name: 'Negotiator', quantity: 1, capability: 'De-escalation' }] },
+    defaultResources: { volunteers: 4, fireTrucks: 2, waterPumps: 0, customItems: [{ name: 'SWAT Team', quantity: 3, capability: 'Assault' }, { name: 'Negotiator', quantity: 1, capability: 'De-escalation' }] },
     problems: [
       { description: 'Prevent the hijacked plane from taking off', priority: 'critical', isPrimary: true },
       { description: 'Rescue the passengers and neutralize the terrorists safely', priority: 'critical' },
@@ -408,7 +408,7 @@ const SCENARIO_TEMPLATES = {
       { color: '#ef4444', label: '🚤 Suspects' },
       { color: '#374151', label: '⛺ Structures' }
     ],
-    defaultResources: { volunteers: 0, fireTrucks: 0, waterPumps: 0, customItems: [{ name: 'Patrol Boat', quantity: 2, capability: 'Water Pursuit' }, { name: 'Searchlight', quantity: 2, capability: 'Illumination' }] },
+    defaultResources: { volunteers: 4, fireTrucks: 0, waterPumps: 0, customItems: [{ name: 'Patrol Boat', quantity: 2, capability: 'Water Pursuit' }, { name: 'Searchlight', quantity: 2, capability: 'Illumination' }] },
     problems: [
       { description: 'Intercept the smuggler boat before it drops the cargo or escapes', priority: 'critical', isPrimary: true },
       { description: 'Raid and secure the suspected hideout on the North Bank', priority: 'important' }
