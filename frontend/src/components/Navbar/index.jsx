@@ -32,7 +32,7 @@ export default function Navbar({ onLogout, user }) {
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 0 10px rgba(14, 165, 233, 0.3)'
             }}>
-              <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.25rem', fontFamily: 'Rajdhani, sans-serif' }}>T</span>
+              <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.25rem', fontFamily: 'Rajdhani, sans-serif' }}>O</span>
             </div>
             <div>
               <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'white', margin: 0, padding: 0 }}>OpSim GPE</h1>

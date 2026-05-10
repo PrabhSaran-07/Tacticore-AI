@@ -12,7 +12,7 @@ const getToken = () => sessionStorage.getItem('token');
 const setToken = (token) => sessionStorage.setItem('token', token);
 const clearToken = () => sessionStorage.removeItem('token');
 
-const API = 'http://localhost:5000';
+const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 export default function App() {
   const [user, setUser] = useState(null);
