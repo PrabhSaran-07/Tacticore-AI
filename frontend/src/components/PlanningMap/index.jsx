@@ -175,8 +175,17 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
 
   // Expose map state to parent via ref
   useImperativeHandle(ref, () => ({
-    getMapState: () => ({ markers, paths })
-  }), [markers, paths]);
+    getMapState: () => ({ markers, paths }),
+    removeItem: (id, kind) => {
+      if (kind === 'marker') {
+        setMarkers(prev => prev.filter(m => m.id !== id));
+        socket.emit('mapUpdate', { roomId, type: 'undo', targetId: id, targetType: 'marker' });
+      } else {
+        setPaths(prev => prev.filter(p => p.id !== id));
+        socket.emit('mapUpdate', { roomId, type: 'undo', targetId: id, targetType: 'path' });
+      }
+    }
+  }), [markers, paths, roomId]);
 
   const MAP_W = 800;
   const MAP_H = 550;
@@ -378,6 +387,12 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
               {path.drawnBy && (
                 <text x={path.points[0]?.x || 0} y={(path.points[0]?.y || 0) - 10} fill="#333" fontSize="8" fontWeight="bold">by {path.drawnBy}</text>
               )}
+              {!readOnly && path.points.length > 0 && (
+                <g style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setPaths(prev => prev.filter(p => p.id !== path.id)); socket.emit('mapUpdate', { roomId, type: 'undo', targetId: path.id, targetType: 'path' }); }}>
+                  <circle cx={path.points[Math.floor(path.points.length / 2)]?.x || 0} cy={(path.points[Math.floor(path.points.length / 2)]?.y || 0) - 12} r="7" fill="#ef4444" stroke="#fff" strokeWidth="1" />
+                  <text x={path.points[Math.floor(path.points.length / 2)]?.x || 0} y={(path.points[Math.floor(path.points.length / 2)]?.y || 0) - 9} textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">✕</text>
+                </g>
+              )}
             </g>
           ))}
 
@@ -401,6 +416,12 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
               <text x={marker.x} y={marker.y + 26} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{marker.label}</text>
               {marker.placedBy && (
                 <text x={marker.x} y={marker.y + 36} textAnchor="middle" fill="#60a5fa" fontSize="7">by {marker.placedBy}</text>
+              )}
+              {!readOnly && (
+                <g style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setMarkers(prev => prev.filter(m => m.id !== marker.id)); socket.emit('mapUpdate', { roomId, type: 'undo', targetId: marker.id, targetType: 'marker' }); }}>
+                  <circle cx={marker.x + 14} cy={marker.y - 14} r="7" fill="#ef4444" stroke="#fff" strokeWidth="1" />
+                  <text x={marker.x + 14} y={marker.y - 11} textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">✕</text>
+                </g>
               )}
             </g>
           ))}
