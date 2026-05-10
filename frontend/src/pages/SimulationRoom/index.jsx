@@ -377,16 +377,14 @@ export default function SimulationRoom({ user, onLogout }) {
   }
 
   // ── MAIN PLANNING ROOM ──
+  const template = session?.scenarioId ? SCENARIO_TEMPLATES[session.scenarioId] : null;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative', height: 'calc(100vh - 4.5rem)', padding: '0.5rem', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100vh', overflow: 'hidden' }}>
 
       {/* Briefing Modal */}
       {showBriefing && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="card" style={{ maxWidth: '650px', width: '100%', boxShadow: '0 0 40px rgba(59,130,246,0.3)' }}>
             <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--primary)', fontSize: '1.75rem' }}>📋 Situation Briefing</h2>
             <div style={{ color: 'var(--gray-300)', lineHeight: '1.6', fontSize: '0.95rem' }}>
@@ -394,240 +392,191 @@ export default function SimulationRoom({ user, onLogout }) {
                 <strong>The Situation:</strong>
                 <p style={{ marginTop: '0.5rem' }}>{session.problemDescription}</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div>
-                  <strong>Resources:</strong>
-                  <ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}>
-                    <li>🚒 {session.assignedResources?.fireTrucks || 0} Fire Trucks</li>
-                    <li>👥 {session.assignedResources?.volunteers || 0} Volunteers</li>
-                    <li>💧 {session.assignedResources?.waterPumps || 0} Water Pumps</li>
+              {session.problems?.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <strong>Problems:</strong>
+                  <ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
+                    {session.problems.map((p, i) => <li key={i}><span style={{ color: p.priority === 'critical' ? '#ef4444' : '#f59e0b' }}>●</span> {p.description}</li>)}
                   </ul>
                 </div>
-                <div>
-                  <strong>Info:</strong>
-                  <ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}>
-                    <li>⏱ {session.timeLimit} Minutes</li>
-                    <li>🎖 Chest No: {user?.chestNo || 'N/A'}</li>
-                  </ul>
-                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div><strong>Resources:</strong><ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}><li>🚒 {session.assignedResources?.fireTrucks || 0} Fire Trucks</li><li>👥 {session.assignedResources?.volunteers || 0} Volunteers</li><li>💧 {session.assignedResources?.waterPumps || 0} Water Pumps</li></ul></div>
+                <div><strong>Info:</strong><ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}><li>⏱ {session.timeLimit} min</li><li>🎖 Chest No: {user?.chestNo || 'N/A'}</li></ul></div>
               </div>
             </div>
-            <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }} onClick={() => setShowBriefing(false)}>
-              Begin Planning
-            </button>
+            <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem', fontSize: '1.1rem' }} onClick={() => setShowBriefing(false)}>🚀 Begin Planning</button>
           </div>
         </div>
       )}
 
-      {/* Submit Confirm Modal */}
+      {/* Submit Modal */}
       {showSubmitConfirm && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div className="card" style={{ maxWidth: '500px', width: '100%' }}>
             {submitStatus === 'success' ? (
-              <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
-                <h2 style={{ color: 'var(--success)', fontSize: '1.5rem', marginBottom: '0.5rem' }}>Answer Submitted!</h2>
-                <p style={{ color: 'var(--gray-400)' }}>Redirecting...</p>
+              <div style={{ textAlign: 'center', padding: '2rem 0' }}><div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div><h2 style={{ color: 'var(--success)' }}>Submitted!</h2><p style={{ color: 'var(--gray-400)' }}>Redirecting...</p></div>
+            ) : (<>
+              <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--primary)' }}>📤 Submit Answer</h2>
+              <p style={{ color: 'var(--gray-400)', marginBottom: '1rem', fontSize: '0.9rem' }}>Send your current map to the Instructor.</p>
+              <textarea className="input" rows="3" placeholder="Reasoning (optional)..." value={submitNote} onChange={e => setSubmitNote(e.target.value)} style={{ resize: 'vertical', marginBottom: '1rem' }} />
+              {submitStatus === 'error' && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>⚠ Failed. Try again.</p>}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handleSubmitAnswer('manual')} disabled={submitStatus === 'submitting'}>{submitStatus === 'submitting' ? '⏳...' : '📤 Confirm'}</button>
+                <button className="btn btn-secondary" onClick={() => { setShowSubmitConfirm(false); setSubmitStatus(null); }}>Cancel</button>
               </div>
-            ) : (
-              <>
-                <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--primary)' }}>📤 Submit Your Answer</h2>
-                <p style={{ color: 'var(--gray-400)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                  This will send your current map placement to the Instructor.
-                </p>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--gray-400)', marginBottom: '0.3rem' }}>
-                    Reasoning (optional)
-                  </label>
-                  <textarea className="input" rows="3" placeholder="Explain your plan..."
-                    value={submitNote} onChange={(e) => setSubmitNote(e.target.value)} style={{ resize: 'vertical' }} />
-                </div>
-                {submitStatus === 'error' && (
-                  <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>⚠ Failed to submit. Try again.</p>
-                )}
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handleSubmitAnswer('manual')} disabled={submitStatus === 'submitting'}>
-                    {submitStatus === 'submitting' ? '⏳ Submitting...' : '📤 Confirm Submit'}
-                  </button>
-                  <button className="btn btn-secondary" onClick={() => { setShowSubmitConfirm(false); setSubmitStatus(null); }} disabled={submitStatus === 'submitting'}>
-                    Cancel
-                  </button>
-                </div>
-              </>
-            )}
+            </>)}
           </div>
         </div>
       )}
 
-      {/* Pause Overlay for Cadet */}
-      {!isRunning && !showBriefing && session?.phase !== 'waiting' && session?.phase !== 'completed' && isCadet && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }}>
+      {/* Pause Overlay — only when truly paused, not during briefing */}
+      {!isRunning && !showBriefing && !showSubmitConfirm && session?.phase !== 'waiting' && session?.phase !== 'completed' && isCadet && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center' }}>
             <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⏸</div>
-            <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--warning)' }}>Session Paused</h2>
-            <p style={{ color: 'var(--gray-300)' }}>
-              Session paused by instructor, waiting for Instructor cmd.
-            </p>
+            <h2 className="card-title" style={{ color: 'var(--warning)' }}>Session Paused</h2>
+            <p style={{ color: 'var(--gray-300)' }}>Session paused by instructor, waiting for Instructor cmd.</p>
           </div>
         </div>
       )}
 
       {/* Instructions Modal */}
       {showInstructions && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }}>
-          <div className="card" style={{ maxWidth: '650px', width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 40px rgba(59,130,246,0.3)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '600px', width: '100%', maxHeight: '85vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 className="card-title" style={{ color: 'var(--primary)', fontSize: '1.5rem', margin: 0 }}>📖 How to Use</h2>
+              <h2 className="card-title" style={{ color: 'var(--primary)', fontSize: '1.5rem', margin: 0 }}>📖 Instructions</h2>
               <button onClick={() => setShowInstructions(false)} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer', fontSize: '1.5rem' }}>✕</button>
             </div>
             <div style={{ color: 'var(--gray-300)', fontSize: '0.85rem', lineHeight: '1.7' }}>
-              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <strong style={{ color: 'var(--primary)' }}>🗺 Map Controls</strong>
-                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
-                  <li><strong>View Mode (👁):</strong> Click and drag to pan the map. Scroll to zoom.</li>
-                  <li><strong>Place Resources:</strong> Select 🚒 Fire Truck, 👷 Volunteer, or 💧 Water Pump, then click on the map.</li>
-                  <li><strong>Draw Route (✏):</strong> Click multiple points to trace a path. Click "✅ Finish Route" when done.</li>
-                  <li><strong>↩ Undo:</strong> Removes the last placed item (marker or route).</li>
-                  <li><strong>🗑 Clear All:</strong> Removes all your placed items.</li>
-                </ul>
-              </div>
-              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <strong style={{ color: 'var(--success)' }}>💬 Group Chat</strong>
-                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
-                  <li>Discuss your plan with teammates in real-time.</li>
-                  <li>All messages are recorded for AI analysis.</li>
-                </ul>
-              </div>
-              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <strong style={{ color: 'var(--warning)' }}>📤 Submitting Your Answer</strong>
-                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
-                  <li>Click <strong>"📤 Submit Answer"</strong> when ready.</li>
-                  <li>Add optional reasoning in the text box.</li>
-                  <li>Your map placements + routes are sent to the instructor.</li>
-                  <li>If time runs out, your work is auto-submitted.</li>
-                </ul>
-              </div>
-              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <strong style={{ color: '#ec4899' }}>📋 Situation Briefing</strong>
-                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
-                  <li>Click <strong>"📋 Situation"</strong> to re-read the problem statement anytime.</li>
-                </ul>
-              </div>
-              <div style={{ padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
-                <strong style={{ color: 'var(--danger)' }}>⏸ Session Paused</strong>
-                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
-                  <li>If the instructor pauses, an overlay appears. Wait for resume.</li>
-                </ul>
-              </div>
+              {[
+                { title: '🗺 Map', color: 'var(--primary)', items: ['View Mode: drag to pan, scroll to zoom', 'Select resource then click map to place', 'Draw Route: click points → Finish Route', 'Undo removes last item, Clear removes all'] },
+                { title: '💬 Chat & Submit', color: 'var(--success)', items: ['Discuss plan in real-time', 'Click Submit when ready, auto-submit on timeout'] },
+              ].map((s, i) => (
+                <div key={i} style={{ marginBottom: '0.75rem', padding: '0.6rem', background: 'var(--gray-800)', borderRadius: '0.4rem' }}>
+                  <strong style={{ color: s.color }}>{s.title}</strong>
+                  <ul style={{ margin: '0.3rem 0 0 1rem', padding: 0 }}>{s.items.map((item, j) => <li key={j}>{item}</li>)}</ul>
+                </div>
+              ))}
             </div>
-            <button className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => setShowInstructions(false)}>Got it!</button>
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: '0.75rem' }} onClick={() => setShowInstructions(false)}>Got it!</button>
           </div>
         </div>
       )}
 
-
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0' }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>Planning Room</h1>
-          <p style={{ color: 'var(--gray-400)', fontSize: '0.8rem' }}>
-            Session: {session.sessionCode}
-            {isCadet && <> | Chest No: <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{user?.chestNo}</span></>}
-            {isAccessor && <> | Role: <span style={{ color: 'var(--primary)' }}>Instructor</span></>}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {isCadet && (
-            <button className="btn btn-success" onClick={() => setShowSubmitConfirm(true)}>📤 Submit Answer</button>
-          )}
-          {isAccessor && (
-            <>
-              <button onClick={toggleSimulation} className={`btn ${isRunning ? 'btn-danger' : 'btn-success'}`}>
-                {isRunning ? '⏸ Pause' : '▶ Resume'}
-              </button>
-              <button className="btn btn-danger" onClick={handleEndSession}>🏁 End Session</button>
-            </>
-          )}
-          <button className="btn btn-secondary" onClick={() => setShowBriefing(true)}>📋 Situation</button>
-          {isCadet && (
-            <button className="btn btn-secondary" onClick={() => { if (onLogout) onLogout(); }}>Logout</button>
-          )}
-          <button className="btn btn-secondary" onClick={() => setShowInstructions(true)}>📖 Instructions</button>
-        </div>
-      </div>
-
-      {/* Mode Toolbar */}
-      <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--gray-800)', padding: '0.5rem', borderRadius: '0.5rem' }}>
-        {[
-          { mode: 'view', label: '👁 View' },
-          { mode: 'add_truck', label: '🚒 Fire Truck' },
-          { mode: 'add_person', label: '👷 Volunteer' },
-          { mode: 'add_pump', label: '💧 Water Pump' },
-          { mode: 'draw_path', label: '✏ Draw Route' },
-        ].map(({ mode, label }) => (
-          <button key={mode} className={`btn btn-sm ${activeMode === mode ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMode(mode)}>
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Map + Sidebar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '0.75rem', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 0 }}>
-          <PlanningMap 
-            ref={mapRef} 
-            roomId={sessionId} 
-            activeMode={activeMode} 
-            user={user} 
-            scenarioId={session?.scenarioId} 
-            assignedResources={session?.assignedResources}
-            onMarkersChange={setCurrentMarkers}
-          />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', minHeight: 0 }}>
-          {/* Timer */}
-          <div className="card" style={{ padding: '0.5rem 0.75rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--gray-400)', textTransform: 'uppercase' }}>Time Left</span>
-              <span style={{ fontSize: '1.4rem', fontWeight: 'bold', fontFamily: 'monospace', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)' }}>
-                {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
-              </span>
-            </div>
+      {/* ══════════ CADET VIEW ══════════ */}
+      {isCadet && (<>
+        {/* Compact Header Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.75rem', background: 'rgba(5,7,10,0.95)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontWeight: '700', color: 'var(--gray-100)', fontSize: '1rem', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Planning Room</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{session.sessionCode} · Chest <strong style={{ color: 'var(--success)' }}>{user?.chestNo}</strong></span>
           </div>
-          <ResourcePanel resources={session?.assignedResources} currentMarkers={currentMarkers} />
-          {/* Participants */}
-          <div className="card" style={{ padding: '0.5rem 0.75rem' }}>
-            <h3 style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--gray-100)', marginBottom: '0.4rem' }}>Cadets ({participants.length})</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-              {participants.map((p, idx) => (
-                <span key={idx} style={{
-                  padding: '0.15rem 0.5rem', background: 'rgba(59,130,246,0.15)', borderRadius: '1rem',
-                  fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '600'
-                }}>
-                  {p.chestNo || p.name}
-                </span>
-              ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ padding: '0.15rem 0.6rem', borderRadius: '0.25rem', fontFamily: 'monospace', fontWeight: '700', fontSize: '1rem', background: time < 300 ? 'rgba(239,68,68,0.15)' : 'rgba(14,165,233,0.08)', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)', border: `1px solid ${time < 300 ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.15)'}` }}>
+              {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
+            </div>
+            <button className="btn btn-sm btn-success" onClick={() => setShowSubmitConfirm(true)} style={{ padding: '0.3rem 0.7rem' }}>📤 Submit</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => setShowBriefing(true)} style={{ padding: '0.3rem 0.5rem' }}>📋</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => setShowInstructions(true)} style={{ padding: '0.3rem 0.5rem' }}>📖</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => { if (onLogout) onLogout(); }} style={{ padding: '0.3rem 0.5rem' }}>⏏</button>
+          </div>
+        </div>
+
+        {/* Map + Right Sidebar */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {/* Map */}
+          <div style={{ position: 'relative', overflow: 'hidden' }}>
+            <PlanningMap ref={mapRef} roomId={sessionId} activeMode={activeMode} user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} />
+          </div>
+          {/* Sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', borderLeft: '1px solid rgba(14,165,233,0.12)', overflow: 'hidden' }}>
+            {/* Tools */}
+            <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Tools</p>
+              <div style={{ display: 'flex', gap: '0.2rem' }}>
+                {[{ m: 'view', l: '👁' }, { m: 'add_truck', l: '🚒' }, { m: 'add_person', l: '👷' }, { m: 'add_pump', l: '💧' }, { m: 'draw_path', l: '✏' }].map(t => (
+                  <button key={t.m} onClick={() => setActiveMode(t.m)} style={{ padding: '0.3rem 0.5rem', borderRadius: '0.2rem', border: activeMode === t.m ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === t.m ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.95rem' }}>{t.l}</button>
+                ))}
+              </div>
+            </div>
+            {/* Legend */}
+            {template?.legend && (
+              <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Legend</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                  {template.legend.map(({ color, label }, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: 'var(--gray-300)' }}>
+                      <div style={{ width: '0.55rem', height: '0.55rem', background: color, borderRadius: '0.1rem', flexShrink: 0 }} /><span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* Resources */}
+            <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources</p>
+              {[{ k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 }, { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 }, { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 }].map(r => {
+                const used = currentMarkers.filter(m => m.type === r.k).length;
+                const rem = Math.max(0, r.mx - used);
+                return (
+                  <div key={r.k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.15rem 0' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--gray-300)' }}>{r.i} {r.l}</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>{rem}/{r.mx}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Chat */}
+            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <ChatPanel roomId={sessionId} user={user} />
             </div>
           </div>
         </div>
-      </div>
+      </>)}
 
-      {/* Chat */}
-      <div style={{ height: '180px', flexShrink: 0 }}>
-        <ChatPanel roomId={sessionId} user={user} />
-      </div>
+      {/* ══════════ ACCESSOR VIEW ══════════ */}
+      {isAccessor && (<>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.75rem', background: 'rgba(5,7,10,0.95)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontWeight: '700', color: 'var(--gray-100)', fontSize: '1rem', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase' }}>Planning Room</span>
+            <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{session.sessionCode} · Instructor</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <div style={{ padding: '0.15rem 0.6rem', borderRadius: '0.25rem', fontFamily: 'monospace', fontWeight: '700', fontSize: '1rem', background: time < 300 ? 'rgba(239,68,68,0.15)' : 'rgba(14,165,233,0.08)', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)' }}>
+              {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
+            </div>
+            <button onClick={toggleSimulation} className={`btn btn-sm ${isRunning ? 'btn-danger' : 'btn-success'}`}>{isRunning ? '⏸ Pause' : '▶ Resume'}</button>
+            <button className="btn btn-sm btn-danger" onClick={handleEndSession}>🏁 End</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => setShowBriefing(true)}>📋</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => setShowInstructions(true)}>📖</button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '0.3rem', background: 'rgba(15,23,42,0.9)', padding: '0.3rem 0.75rem', flexShrink: 0 }}>
+          {[{ mode: 'view', label: '👁 View' }, { mode: 'add_truck', label: '🚒 Truck' }, { mode: 'add_person', label: '👷 Vol.' }, { mode: 'add_pump', label: '💧 Pump' }, { mode: 'draw_path', label: '✏ Route' }].map(({ mode, label }) => (
+            <button key={mode} className={`btn btn-sm ${activeMode === mode ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMode(mode)}>{label}</button>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', flex: 1, minHeight: 0, overflow: 'hidden', padding: '0.4rem' }}>
+          <div style={{ overflow: 'hidden', position: 'relative', minHeight: 0, border: '1px solid rgba(14,165,233,0.15)', borderRadius: '0.3rem' }}>
+            <PlanningMap ref={mapRef} roomId={sessionId} activeMode={activeMode} user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', overflowY: 'auto', minHeight: 0, paddingLeft: '0.4rem' }}>
+            <ResourcePanel resources={session?.assignedResources} currentMarkers={currentMarkers} />
+            <div className="card" style={{ padding: '0.5rem 0.75rem' }}>
+              <h3 style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--gray-100)', marginBottom: '0.35rem' }}>Cadets ({participants.length})</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                {participants.map((p, idx) => <span key={idx} style={{ padding: '0.1rem 0.45rem', background: 'rgba(59,130,246,0.15)', borderRadius: '1rem', fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '600' }}>{p.chestNo || p.name}</span>)}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{ height: '150px', flexShrink: 0, padding: '0 0.4rem 0.4rem' }}>
+          <ChatPanel roomId={sessionId} user={user} />
+        </div>
+      </>)}
     </div>
   );
 }
+
