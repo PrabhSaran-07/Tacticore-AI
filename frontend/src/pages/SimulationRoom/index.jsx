@@ -28,6 +28,7 @@ export default function SimulationRoom({ user, onLogout }) {
   const [activeMode, setActiveMode] = useState('view');
   const [sessionEnded, setSessionEnded] = useState(false);
   const [currentMarkers, setCurrentMarkers] = useState([]);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const isCadet = user?.role === 'cadet';
   const isAccessor = user?.role === 'accessor';
@@ -53,8 +54,12 @@ export default function SimulationRoom({ user, onLogout }) {
           if (data.session.phase === 'completed') {
             setSessionEnded(true);
           } else if (data.session.phase !== 'waiting') {
-            // Check if it should be running
+            // Session already active — sync timer and start running
             setIsRunning(data.session.status === 'active');
+            // Show briefing on first load if cadet hasn't seen it yet
+            if (isCadet && data.session.status === 'active') {
+              setShowBriefing(true);
+            }
           }
         }
       } catch (err) {
@@ -84,10 +89,16 @@ export default function SimulationRoom({ user, onLogout }) {
         }
         return prev;
       });
-      if (data.phase === 'group_discussion' || data.phase === 'individual_planning') {
+
+      // Session just started (moved from waiting to any active phase)
+      if (data.phase !== 'waiting' && data.phase !== 'completed') {
         setIsRunning(true);
-        setShowBriefing(true);
+        // Show briefing popup automatically when session begins
+        if (data.phase === 'briefing' || data.phase === 'group_discussion' || data.phase === 'individual_planning') {
+          setShowBriefing(true);
+        }
       }
+
       if (data.phase === 'completed') {
         setSessionEnded(true);
         setIsRunning(false);
@@ -95,6 +106,15 @@ export default function SimulationRoom({ user, onLogout }) {
     });
 
     socket.on('sessionEnded', () => {
+      // Auto-submit cadet's work before showing ended screen
+      if (isCadet && mapRef.current && submitStatus !== 'success') {
+        const { markers, paths } = mapRef.current.getMapState();
+        fetch(`${API}/api/sessions/${sessionId}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+          body: JSON.stringify({ markers, paths, note: 'Auto-submitted: session ended by instructor' })
+        }).catch(() => {});
+      }
       setSessionEnded(true);
       setIsRunning(false);
     });
@@ -358,7 +378,7 @@ export default function SimulationRoom({ user, onLogout }) {
 
   // ── MAIN PLANNING ROOM ──
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', position: 'relative', minHeight: 'calc(100vh - 8rem)', padding: '0.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', position: 'relative', height: 'calc(100vh - 4.5rem)', padding: '0.5rem', overflow: 'hidden' }}>
 
       {/* Briefing Modal */}
       {showBriefing && (
@@ -460,6 +480,64 @@ export default function SimulationRoom({ user, onLogout }) {
         </div>
       )}
 
+      {/* Instructions Modal */}
+      {showInstructions && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div className="card" style={{ maxWidth: '650px', width: '100%', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 40px rgba(59,130,246,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 className="card-title" style={{ color: 'var(--primary)', fontSize: '1.5rem', margin: 0 }}>📖 How to Use</h2>
+              <button onClick={() => setShowInstructions(false)} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer', fontSize: '1.5rem' }}>✕</button>
+            </div>
+            <div style={{ color: 'var(--gray-300)', fontSize: '0.85rem', lineHeight: '1.7' }}>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
+                <strong style={{ color: 'var(--primary)' }}>🗺 Map Controls</strong>
+                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
+                  <li><strong>View Mode (👁):</strong> Click and drag to pan the map. Scroll to zoom.</li>
+                  <li><strong>Place Resources:</strong> Select 🚒 Fire Truck, 👷 Volunteer, or 💧 Water Pump, then click on the map.</li>
+                  <li><strong>Draw Route (✏):</strong> Click multiple points to trace a path. Click "✅ Finish Route" when done.</li>
+                  <li><strong>↩ Undo:</strong> Removes the last placed item (marker or route).</li>
+                  <li><strong>🗑 Clear All:</strong> Removes all your placed items.</li>
+                </ul>
+              </div>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
+                <strong style={{ color: 'var(--success)' }}>💬 Group Chat</strong>
+                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
+                  <li>Discuss your plan with teammates in real-time.</li>
+                  <li>All messages are recorded for AI analysis.</li>
+                </ul>
+              </div>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
+                <strong style={{ color: 'var(--warning)' }}>📤 Submitting Your Answer</strong>
+                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
+                  <li>Click <strong>"📤 Submit Answer"</strong> when ready.</li>
+                  <li>Add optional reasoning in the text box.</li>
+                  <li>Your map placements + routes are sent to the instructor.</li>
+                  <li>If time runs out, your work is auto-submitted.</li>
+                </ul>
+              </div>
+              <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
+                <strong style={{ color: '#ec4899' }}>📋 Situation Briefing</strong>
+                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
+                  <li>Click <strong>"📋 Situation"</strong> to re-read the problem statement anytime.</li>
+                </ul>
+              </div>
+              <div style={{ padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem' }}>
+                <strong style={{ color: 'var(--danger)' }}>⏸ Session Paused</strong>
+                <ul style={{ margin: '0.5rem 0 0 1.2rem', padding: 0 }}>
+                  <li>If the instructor pauses, an overlay appears. Wait for resume.</li>
+                </ul>
+              </div>
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }} onClick={() => setShowInstructions(false)}>Got it!</button>
+          </div>
+        </div>
+      )}
+
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0' }}>
         <div>
@@ -486,6 +564,7 @@ export default function SimulationRoom({ user, onLogout }) {
           {isCadet && (
             <button className="btn btn-secondary" onClick={() => { if (onLogout) onLogout(); }}>Logout</button>
           )}
+          <button className="btn btn-secondary" onClick={() => setShowInstructions(true)}>📖 Instructions</button>
         </div>
       </div>
 
@@ -505,8 +584,8 @@ export default function SimulationRoom({ user, onLogout }) {
       </div>
 
       {/* Map + Sidebar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', flex: 1, minHeight: '250px' }}>
-        <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '0.75rem', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div className="card" style={{ padding: 0, overflow: 'hidden', position: 'relative', minHeight: 0 }}>
           <PlanningMap 
             ref={mapRef} 
             roomId={sessionId} 
@@ -517,43 +596,28 @@ export default function SimulationRoom({ user, onLogout }) {
             onMarkersChange={setCurrentMarkers}
           />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto' }}>
-          {/* Map Legend */}
-          {session?.scenarioId && SCENARIO_TEMPLATES[session.scenarioId]?.legend && (
-            <div className="card">
-              <h3 className="card-title" style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Map Legend</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {SCENARIO_TEMPLATES[session.scenarioId].legend.map(({ color, label }, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <div style={{ width: '1rem', height: '1rem', background: color, borderRadius: '0.2rem' }}></div>
-                    <span style={{ fontSize: '0.85rem', color: 'var(--gray-300)' }}>{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="card">
-            <h3 className="card-title" style={{ fontSize: '1rem', marginBottom: '1rem' }}>Exercise Status</h3>
-            <div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--gray-400)', textTransform: 'uppercase' }}>Time Remaining</p>
-              <p style={{ fontSize: '2rem', fontWeight: 'bold', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', minHeight: 0 }}>
+          {/* Timer */}
+          <div className="card" style={{ padding: '0.5rem 0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--gray-400)', textTransform: 'uppercase' }}>Time Left</span>
+              <span style={{ fontSize: '1.4rem', fontWeight: 'bold', fontFamily: 'monospace', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)' }}>
                 {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
-              </p>
+              </span>
             </div>
           </div>
           <ResourcePanel resources={session?.assignedResources} currentMarkers={currentMarkers} />
           {/* Participants */}
-          <div className="card">
-            <h3 className="card-title" style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>Cadets ({participants.length})</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="card" style={{ padding: '0.5rem 0.75rem' }}>
+            <h3 style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--gray-100)', marginBottom: '0.4rem' }}>Cadets ({participants.length})</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
               {participants.map((p, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem', background: 'var(--gray-800)', borderRadius: '0.3rem' }}>
-                  <span style={{ background: 'var(--primary)', color: 'white', padding: '0.2rem 0.5rem', borderRadius: '0.3rem', fontSize: '0.75rem', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                    {p.chestNo || '?'}
-                  </span>
-                  <span style={{ color: 'var(--gray-300)', fontSize: '0.8rem' }}>{p.name}</span>
-                </div>
+                <span key={idx} style={{
+                  padding: '0.15rem 0.5rem', background: 'rgba(59,130,246,0.15)', borderRadius: '1rem',
+                  fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '600'
+                }}>
+                  {p.chestNo || p.name}
+                </span>
               ))}
             </div>
           </div>
@@ -561,7 +625,7 @@ export default function SimulationRoom({ user, onLogout }) {
       </div>
 
       {/* Chat */}
-      <div style={{ height: '25%' }}>
+      <div style={{ height: '180px', flexShrink: 0 }}>
         <ChatPanel roomId={sessionId} user={user} />
       </div>
     </div>
