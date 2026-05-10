@@ -204,14 +204,6 @@ export default function Login({ onAccessorLogin, onCadetJoin }) {
                 {loading ? '⏳ Signing In...' : 'Sign In'}
               </button>
 
-              <div style={{ padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem', border: '1px solid var(--gray-700)' }}>
-                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginBottom: '0.4rem', fontWeight: '600' }}>Instructor Accounts:</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--gray-400)', fontFamily: 'monospace' }}>
-                  <p>IO: io@gov.in / io@12345</p>
-                  <p>Psych: psych@gov.in / psych@12345</p>
-                  <p>GTO: gto@gov.in / gto@12345</p>
-                </div>
-              </div>
             </form>
           )}
         </div>
