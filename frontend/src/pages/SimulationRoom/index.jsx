@@ -54,8 +54,12 @@ export default function SimulationRoom({ user, onLogout }) {
           if (data.session.phase === 'completed') {
             setSessionEnded(true);
           } else if (data.session.phase !== 'waiting') {
-            // Check if it should be running
+            // Session already active — sync timer and start running
             setIsRunning(data.session.status === 'active');
+            // Show briefing on first load if cadet hasn't seen it yet
+            if (isCadet && data.session.status === 'active') {
+              setShowBriefing(true);
+            }
           }
         }
       } catch (err) {
@@ -85,10 +89,16 @@ export default function SimulationRoom({ user, onLogout }) {
         }
         return prev;
       });
-      if (data.phase === 'group_discussion' || data.phase === 'individual_planning') {
+
+      // Session just started (moved from waiting to any active phase)
+      if (data.phase !== 'waiting' && data.phase !== 'completed') {
         setIsRunning(true);
-        setShowBriefing(true);
+        // Show briefing popup automatically when session begins
+        if (data.phase === 'briefing' || data.phase === 'group_discussion' || data.phase === 'individual_planning') {
+          setShowBriefing(true);
+        }
       }
+
       if (data.phase === 'completed') {
         setSessionEnded(true);
         setIsRunning(false);
@@ -96,6 +106,15 @@ export default function SimulationRoom({ user, onLogout }) {
     });
 
     socket.on('sessionEnded', () => {
+      // Auto-submit cadet's work before showing ended screen
+      if (isCadet && mapRef.current && submitStatus !== 'success') {
+        const { markers, paths } = mapRef.current.getMapState();
+        fetch(`${API}/api/sessions/${sessionId}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+          body: JSON.stringify({ markers, paths, note: 'Auto-submitted: session ended by instructor' })
+        }).catch(() => {});
+      }
       setSessionEnded(true);
       setIsRunning(false);
     });
