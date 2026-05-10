@@ -1,68 +1,100 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import SimulationRoom from './pages/SimulationRoom';
 import AccessorPortal from './pages/AccessorPortal';
-import CadetPortal from './pages/CadetPortal';
-import ResultsPage from './pages/ResultsPage';
+import CadetSessionResults from './pages/CadetSessionResults';
 
-const getSafeUser = () => {
-  try {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : { role: '' };
-  } catch {
-    return { role: '' };
-  }
-};
+// ── Token helpers (sessionStorage only — no localStorage) ──
+const getToken = () => sessionStorage.getItem('token');
+const setToken = (token) => sessionStorage.setItem('token', token);
+const clearToken = () => sessionStorage.removeItem('token');
+
+const API = 'http://localhost:5000';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-  const [user, setUser] = useState(getSafeUser());
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [cadetSession, setCadetSession] = useState(null); // session info when cadet joins
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    setUser(getSafeUser());
+  // On mount, check if we have a token and fetch user from server
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      fetch(`${API}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => setUser(data.user))
+        .catch(() => { clearToken(); })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleAccessorLogin = (token, userData) => {
+    setToken(token);
+    setUser(userData);
+  };
+
+  const handleCadetJoin = (token, userData, sessionInfo) => {
+    setToken(token);
+    setUser(userData);
+    setCadetSession(sessionInfo);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setUser({ role: '' });
+    clearToken();
+    setUser(null);
+    setCadetSession(null);
   };
+
+  // Global logout listener
+  useEffect(() => {
+    const onAppLogout = () => handleLogout();
+    window.addEventListener('app-logout', onAppLogout);
+    return () => window.removeEventListener('app-logout', onAppLogout);
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#050a13', color: '#6b7280' }}>
+        Connecting to server...
+      </div>
+    );
+  }
+
+  const isAuth = !!user;
+  const role = user?.role || '';
 
   return (
     <Router>
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#050a13' }}>
-        {isAuthenticated && <Navbar onLogout={handleLogout} />}
-        <main style={{ flex: 1, padding: isAuthenticated ? '2rem' : '0', maxWidth: isAuthenticated ? '1400px' : '100%', margin: '0 auto', width: '100%' }}>
+        {isAuth && role === 'accessor' && <Navbar onLogout={handleLogout} user={user} />}
+        <main style={{ flex: 1, padding: isAuth && role === 'accessor' ? '2rem' : '0', maxWidth: isAuth && role === 'accessor' ? '1400px' : '100%', margin: '0 auto', width: '100%' }}>
           <Routes>
-            {/* Login - always accessible, redirects if already logged in */}
+            {/* Login — shows accessor login + cadet join */}
             <Route
               path="/"
               element={
-                isAuthenticated
-                  ? <Navigate to={user.role === 'accessor' ? '/accessor' : '/cadet'} replace />
-                  : <Login onLogin={handleLogin} />
+                isAuth
+                  ? <Navigate to={role === 'accessor' ? '/accessor' : `/simulation?sessionId=${cadetSession?._id || ''}`} replace />
+                  : <Login onAccessorLogin={handleAccessorLogin} onCadetJoin={handleCadetJoin} />
               }
             />
 
-            {/* Shared authenticated routes */}
-            <Route path="/dashboard" element={isAuthenticated ? <Dashboard /> : <Navigate to="/" replace />} />
-            <Route path="/simulation" element={isAuthenticated ? <SimulationRoom /> : <Navigate to="/" replace />} />
-            <Route path="/results" element={isAuthenticated ? <ResultsPage /> : <Navigate to="/" replace />} />
+            {/* Accessor routes */}
+            <Route path="/dashboard" element={isAuth && role === 'accessor' ? <Dashboard user={user} /> : <Navigate to="/" replace />} />
+            <Route path="/accessor" element={isAuth && role === 'accessor' ? <AccessorPortal user={user} /> : <Navigate to="/" replace />} />
 
-            {/* Role-specific portals */}
-            <Route
-              path="/accessor"
-              element={isAuthenticated && user.role === 'accessor' ? <AccessorPortal /> : <Navigate to="/" replace />}
-            />
-            <Route
-              path="/cadet"
-              element={isAuthenticated && user.role === 'cadet' ? <CadetPortal /> : <Navigate to="/" replace />}
-            />
+            {/* Simulation — both roles */}
+            <Route path="/simulation" element={isAuth ? <SimulationRoom user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />} />
+
+            {/* Cadet results */}
+            <Route path="/cadet-session-results" element={isAuth && role === 'cadet' ? <CadetSessionResults onLogout={handleLogout} /> : <Navigate to="/" replace />} />
 
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

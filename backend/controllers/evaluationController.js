@@ -1,30 +1,27 @@
-const aiEvaluation = require('../services/aiEvaluation');
-const mockDb = require('../services/mockDatabase');
+// Evaluation controller — uses MongoDB via Session model
+const Session = require('../models/Session');
+const { analyzeSubmission } = require('../services/olqAnalyzer');
 
 exports.evaluateSession = async (req, res) => {
   try {
     const { sessionId } = req.body;
     
-    const session = mockDb.sessions.find(s => s._id === sessionId);
+    const session = await Session.findById(sessionId);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
     
-    const score = aiEvaluation.analyze(session);
-    
-    const result = {
-      _id: String(mockDb.results.length + 1),
-      session: sessionId,
-      score: score.overallScore,
-      feedback: 'Evaluation complete',
-      metrics: score,
-      createdAt: new Date()
-    };
-    
-    mockDb.results.push(result);
-    session.status = 'completed';
-    
-    res.status(200).json({ result });
+    // Re-analyze all submissions
+    let updated = false;
+    if (session.submissions) {
+      session.submissions.forEach(sub => {
+        sub.olqAnalysis = analyzeSubmission(sub, session);
+        updated = true;
+      });
+    }
+    if (updated) await session.save();
+
+    res.status(200).json({ message: 'Evaluation complete', session });
   } catch (error) {
     res.status(500).json({ error: 'Evaluation failed' });
   }

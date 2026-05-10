@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const scenarioRoutes = require('./routes/scenarioRoutes');
@@ -12,11 +11,12 @@ const evaluationRoutes = require('./routes/evaluationRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
 const collaborationSocket = require('./sockets/collaborationSocket');
 
-dotenv.config();
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
+
+// Make io accessible to routes
+app.set('io', io);
 
 app.use(cors());
 app.use(express.json());
@@ -35,26 +35,40 @@ const MONGO_URI = process.env.MONGO_URI;
 const startServer = () => {
   server.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
-    if (MONGO_URI) {
-      console.log('MongoDB URI configured. Ready to connect.');
-    } else {
-      console.log('⚠️  No MONGO_URI provided. Running in mock mode without database.');
-    }
   });
+};
+
+// Seed the 3 SSB accessor accounts
+const seedAccessors = async () => {
+  const User = require('./models/User');
+  const accessors = [
+    { name: 'Interviewing Officer', email: 'io@gov.in', password: 'io@12345', role: 'accessor' },
+    { name: 'Psychologist', email: 'psych@gov.in', password: 'psych@12345', role: 'accessor' },
+    { name: 'Group Testing Officer', email: 'gto@gov.in', password: 'gto@12345', role: 'accessor' }
+  ];
+  for (const acc of accessors) {
+    const exists = await User.findOne({ email: acc.email });
+    if (!exists) {
+      await User.create(acc);
+      console.log(`  ✅ Seeded accessor: ${acc.email}`);
+    }
+  }
 };
 
 if (MONGO_URI) {
   mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => {
+    .then(async () => {
       console.log('✅ Connected to MongoDB');
+      await seedAccessors();
       startServer();
     })
     .catch((err) => {
-      console.error('⚠️  MongoDB connection failed:', err.message);
-      console.log('Starting server in mock mode...');
-      startServer();
+      console.error('❌ MongoDB connection failed:', err.message);
+      console.error('   This platform requires MongoDB. Please set MONGO_URI in .env');
+      process.exit(1);
     });
 } else {
-  console.log('No MONGO_URI in environment. Starting server in mock mode.');
-  startServer();
+  console.error('❌ No MONGO_URI in environment. MongoDB is required.');
+  console.error('   Add MONGO_URI to your .env file');
+  process.exit(1);
 }

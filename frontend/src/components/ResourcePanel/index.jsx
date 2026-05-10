@@ -1,11 +1,19 @@
 import { useState } from 'react';
 
-export default function ResourcePanel({ resources: assignedResources }) {
-  const [resources] = useState([
-    { name: 'Volunteers', current: assignedResources?.volunteers || 4, max: assignedResources?.volunteers || 4, icon: '👥' },
-    { name: 'Fire Truck', current: assignedResources?.fireTrucks || 1, max: assignedResources?.fireTrucks || 1, icon: '🚒' },
-    { name: 'Water Pump', current: assignedResources?.waterPumps || 1, max: assignedResources?.waterPumps || 1, icon: '💧' },
-  ]);
+export default function ResourcePanel({ resources: assignedResources, currentMarkers = [] }) {
+  const volunteersUsed = currentMarkers.filter(m => m.type === 'add_person').length;
+  const trucksUsed = currentMarkers.filter(m => m.type === 'add_truck').length;
+  const pumpsUsed = currentMarkers.filter(m => m.type === 'add_pump').length;
+
+  const maxVolunteers = assignedResources?.volunteers || 4;
+  const maxTrucks = assignedResources?.fireTrucks || 1;
+  const maxPumps = assignedResources?.waterPumps || 1;
+
+  const resources = [
+    { name: 'Volunteers', current: Math.max(0, maxVolunteers - volunteersUsed), max: maxVolunteers, icon: '👥' },
+    { name: 'Fire Trucks', current: Math.max(0, maxTrucks - trucksUsed), max: maxTrucks, icon: '🚒' },
+    { name: 'Water Pumps', current: Math.max(0, maxPumps - pumpsUsed), max: maxPumps, icon: '💧' },
+  ];
 
   return (
     <div className="card">
@@ -16,12 +24,12 @@ export default function ResourcePanel({ resources: assignedResources }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {resources.map((resource, idx) => (
           <div key={idx}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <label style={{ fontSize: '0.875rem', color: 'var(--gray-300)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.125rem' }}>{resource.icon}</span>
                 {resource.name}
               </label>
-              <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--primary)' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: '600', color: resource.current === 0 ? 'var(--danger)' : 'var(--primary)' }}>
                 {resource.current}/{resource.max}
               </span>
             </div>
@@ -31,8 +39,8 @@ export default function ResourcePanel({ resources: assignedResources }) {
                   height: '0.5rem', 
                   borderRadius: '9999px', 
                   transition: 'all 0.3s ease',
-                  width: `${(resource.current / resource.max) * 100}%`,
-                  background: 'var(--success)'
+                  width: `${resource.max > 0 ? (resource.current / resource.max) * 100 : 0}%`,
+                  background: resource.current === 0 ? 'var(--danger)' : 'var(--success)'
                 }}
               ></div>
             </div>
