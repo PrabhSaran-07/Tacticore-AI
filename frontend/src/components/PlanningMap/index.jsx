@@ -284,21 +284,32 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
     setMarkers([]);
     setPaths([]);
     setDrawingPath(null);
-    socket.emit('mapUpdate', { roomId, type: 'clear' });
+    socket.emit('mapUpdate', { roomId, type: 'clear', userId: user?._id, chestNo: user?.chestNo });
   };
 
   const handleUndo = () => {
-    const latestMarker = markers.reduce((max, m) => (m.id > (max?.id || 0) ? m : max), null);
-    const latestPath = paths.reduce((max, p) => (p.id > (max?.id || 0) ? p : max), null);
+    // If currently drawing a path, cancel it first
+    if (drawingPath) {
+      setDrawingPath(null);
+      return;
+    }
 
-    if (!latestMarker && !latestPath) return;
+    // Collect all items with their type for chronological undo
+    const allItems = [
+      ...markers.map(m => ({ ...m, _kind: 'marker' })),
+      ...paths.map(p => ({ ...p, _kind: 'path' }))
+    ];
+    if (allItems.length === 0) return;
 
-    if (latestMarker && (!latestPath || latestMarker.id > latestPath.id)) {
-      setMarkers(prev => prev.filter(m => m.id !== latestMarker.id));
-      socket.emit('mapUpdate', { roomId, type: 'undo', targetId: latestMarker.id, targetType: 'marker' });
-    } else if (latestPath) {
-      setPaths(prev => prev.filter(p => p.id !== latestPath.id));
-      socket.emit('mapUpdate', { roomId, type: 'undo', targetId: latestPath.id, targetType: 'path' });
+    // Find the most recent item by id (timestamp-based)
+    const latest = allItems.reduce((max, item) => (item.id > max.id ? item : max), allItems[0]);
+
+    if (latest._kind === 'marker') {
+      setMarkers(prev => prev.filter(m => m.id !== latest.id));
+      socket.emit('mapUpdate', { roomId, type: 'undo', targetId: latest.id, targetType: 'marker' });
+    } else {
+      setPaths(prev => prev.filter(p => p.id !== latest.id));
+      socket.emit('mapUpdate', { roomId, type: 'undo', targetId: latest.id, targetType: 'path' });
     }
   };
 
