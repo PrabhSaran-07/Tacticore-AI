@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const API = 'http://localhost:5000';
+const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const BATCH_OPTIONS = [
   'NDA-156', 'NDA-157', 'NDA-158',
@@ -116,7 +116,7 @@ export default function Login({ onAccessorLogin, onCadetJoin }) {
             borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 1rem', boxShadow: '0 0 20px rgba(14, 165, 233, 0.5)',
             fontSize: '2rem', color: 'var(--primary)', fontWeight: '800', fontFamily: 'Rajdhani, sans-serif'
-          }}>T</div>
+          }}>O</div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '0.3rem', letterSpacing: '-0.02em' }}>
             OpSim GPE
           </h1>

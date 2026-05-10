@@ -120,7 +120,8 @@ export default function CreateSessionWizard({ onCreated, onCancel }) {
     setCreating(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:5000/api/sessions/create', {
+      const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${API}/api/sessions/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

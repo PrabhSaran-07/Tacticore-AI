@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import CreateSessionWizard from '../../components/CreateSessionWizard';
 import SCENARIO_TEMPLATES from '../../data/scenarioTemplates';
 
+const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 // Reuse the element renderer from PlanningMap (simplified inline version)
 function renderSubmissionElement(el, idx) {
   switch (el.type) {
@@ -14,7 +16,7 @@ function renderSubmissionElement(el, idx) {
         </g>
       );
     case 'road':
-      return <rect key={idx} x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? (el.width || 18) : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? (el.width || 18) : Math.abs(el.y2 - el.y1)} fill="#6b7280" />;
+      return <line key={idx} x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={el.width || 18} />;
     case 'house':
       return (
         <g key={idx}>
@@ -141,8 +143,8 @@ function renderSubmissionElement(el, idx) {
     case 'road_blocked':
       return (
         <g key={idx}>
-          <rect x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? 20 : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? 20 : Math.abs(el.y2 - el.y1)} fill="#6b7280" />
-          <rect x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? 20 : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? 20 : Math.abs(el.y2 - el.y1)} fill="rgba(239,68,68,0.3)" />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={20} />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="rgba(239,68,68,0.3)" strokeWidth={20} />
           {el.label && <text x={(el.x1 + el.x2) / 2 + 15} y={(el.y1 + el.y2) / 2} fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -153,38 +155,67 @@ function renderSubmissionElement(el, idx) {
 
 // Mini SVG map that renders a cadet's submitted markers and paths with scenario backdrop
 function SubmissionMap({ markers = [], paths = [], scenarioId }) {
+  const [step, setStep] = useState(-1);
   const W = 800, H = 550;
   const template = SCENARIO_TEMPLATES[scenarioId] || SCENARIO_TEMPLATES['village_fire'];
+
+  const allActions = [
+    ...markers.map(m => ({ ...m, _type: 'marker' })),
+    ...paths.map(p => ({ ...p, _type: 'path' }))
+  ].sort((a, b) => a.id - b.id);
+
+  const totalSteps = allActions.length;
+  const visibleActions = step === -1 || step >= totalSteps ? allActions : allActions.slice(0, step);
+
+  const visibleMarkers = visibleActions.filter(a => a._type === 'marker');
+  const visiblePaths = visibleActions.filter(a => a._type === 'path');
+
+  const handleNext = () => setStep(prev => (prev === -1 ? totalSteps : prev) < totalSteps ? (prev === -1 ? 1 : prev + 1) : prev);
+  const handlePrev = () => setStep(prev => prev === -1 ? totalSteps - 1 : prev > 0 ? prev - 1 : prev);
+  const handleReset = () => setStep(0);
+  const handleShowAll = () => setStep(-1);
+
   return (
-    <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: template.terrain || '#3d6b47', display: 'flex', alignItems: 'center' }}>
-      <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
-        <rect x="0" y="0" width={W} height={H} fill={template.terrain || '#3d6b47'} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', background: 'var(--gray-800)', padding: '0.5rem', borderRadius: '0.5rem' }}>
+        <button className="btn btn-sm btn-secondary" onClick={handleReset} disabled={step === 0}>⏮ Reset</button>
+        <button className="btn btn-sm btn-secondary" onClick={handlePrev} disabled={step === 0}>◀ Prev</button>
+        <span style={{ display: 'flex', alignItems: 'center', fontSize: '0.8rem', color: 'var(--gray-300)', minWidth: '80px', justifyContent: 'center' }}>
+          Step {step === -1 ? totalSteps : step} / {totalSteps}
+        </span>
+        <button className="btn btn-sm btn-secondary" onClick={handleNext} disabled={step === -1 || step === totalSteps}>Next ▶</button>
+        <button className="btn btn-sm btn-primary" onClick={handleShowAll} disabled={step === -1 || step === totalSteps}>⏭ Show All</button>
+      </div>
+      <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: template.terrain || '#3d6b47', display: 'flex', alignItems: 'center' }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
+          <rect x="0" y="0" width={W} height={H} fill={template.terrain || '#3d6b47'} />
 
-        {/* Scenario backdrop (faded) */}
-        {template.elements.map((el, idx) => renderSubmissionElement(el, idx))}
+          {/* Scenario backdrop (faded) */}
+          {template.elements.map((el, idx) => renderSubmissionElement(el, idx))}
 
-        {/* Arrow def */}
-        <defs>
-          <marker id="sub-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
-          </marker>
-        </defs>
+          {/* Arrow def */}
+          <defs>
+            <marker id="sub-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
+            </marker>
+          </defs>
 
-        {/* ===== CADET'S SUBMITTED PATHS ===== */}
-        {paths.map((path, idx) => (
-          <polyline key={idx} points={(path.points || []).map(p => `${p.x},${p.y}`).join(' ')}
-            stroke={path.color || '#22d3ee'} strokeWidth="3" fill="none" strokeDasharray="8,4" markerEnd="url(#sub-arrow)" />
-        ))}
+          {/* ===== CADET'S SUBMITTED PATHS ===== */}
+          {visiblePaths.map((path, idx) => (
+            <polyline key={idx} points={(path.points || []).map(p => `${p.x},${p.y}`).join(' ')}
+              stroke={path.color || '#22d3ee'} strokeWidth="3" fill="none" strokeDasharray="8,4" markerEnd="url(#sub-arrow)" />
+          ))}
 
-        {/* ===== CADET'S SUBMITTED MARKERS ===== */}
-        {markers.map((m, idx) => (
-          <g key={idx}>
-            <circle cx={m.x} cy={m.y} r="18" fill={m.color || '#3b82f6'} fillOpacity="0.3" stroke={m.color || '#3b82f6'} strokeWidth="2"/>
-            <text x={m.x} y={m.y + 6} textAnchor="middle" fontSize="18">{m.icon || '📍'}</text>
-            <text x={m.x} y={m.y + 26} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{m.label || ''}</text>
-          </g>
-        ))}
-      </svg>
+          {/* ===== CADET'S SUBMITTED MARKERS ===== */}
+          {visibleMarkers.map((m, idx) => (
+            <g key={idx}>
+              <circle cx={m.x} cy={m.y} r="18" fill={m.color || '#3b82f6'} fillOpacity="0.3" stroke={m.color || '#3b82f6'} strokeWidth="2"/>
+              <text x={m.x} y={m.y + 6} textAnchor="middle" fontSize="18">{m.icon || '📍'}</text>
+              <text x={m.x} y={m.y + 26} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{m.label || ''}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
     </div>
   );
 }
@@ -202,7 +233,7 @@ export default function AccessorPortal() {
   useEffect(() => {
     const fetchSessions = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/sessions/my-sessions', {
+        const response = await fetch(`${API}/api/sessions/my-sessions`, {
           headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
         });
         const data = await response.json();
@@ -222,7 +253,7 @@ export default function AccessorPortal() {
   const handleDeleteSession = async (sessionId) => {
     if (!confirm('Are you sure you want to delete this session? This cannot be undone.')) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/sessions/${sessionId}`, {
+      const response = await fetch(`${API}/api/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
@@ -244,7 +275,7 @@ export default function AccessorPortal() {
     setSubmissions([]);
     setExpandedSubmission(null);
     try {
-      const response = await fetch(`http://localhost:5000/api/sessions/${session._id}/submissions`, {
+      const response = await fetch(`${API}/api/sessions/${session._id}/submissions`, {
         headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
       });
       const data = await response.json();

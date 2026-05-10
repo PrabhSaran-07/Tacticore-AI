@@ -6,7 +6,7 @@ import ResourcePanel from '../../components/ResourcePanel';
 import socket from '../../services/socket';
 import SCENARIO_TEMPLATES from '../../data/scenarioTemplates';
 
-const API = 'http://localhost:5000';
+const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 const getToken = () => sessionStorage.getItem('token');
 
 export default function SimulationRoom({ user, onLogout }) {
@@ -43,12 +43,18 @@ export default function SimulationRoom({ user, onLogout }) {
         const data = await response.json();
         if (response.ok) {
           setSession(data.session);
-          setTime(data.session.timeLimit * 60 || 0);
+          let initialTime = data.session.timeLimit * 60 || 0;
+          if (data.session.startedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(data.session.startedAt).getTime()) / 1000);
+            initialTime = Math.max(0, initialTime - elapsed);
+          }
+          setTime(initialTime);
           setParticipants(data.session.participants || []);
           if (data.session.phase === 'completed') {
             setSessionEnded(true);
           } else if (data.session.phase !== 'waiting') {
-            setIsRunning(true);
+            // Check if it should be running
+            setIsRunning(data.session.status === 'active');
           }
         }
       } catch (err) {
@@ -66,7 +72,18 @@ export default function SimulationRoom({ user, onLogout }) {
 
     // Listen for phase changes
     socket.on('sessionPhaseChange', (data) => {
-      setSession(prev => prev ? { ...prev, phase: data.phase, status: data.status } : prev);
+      setSession(prev => {
+        if (prev) {
+          let initialTime = prev.timeLimit * 60 || 0;
+          if (data.startedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(data.startedAt).getTime()) / 1000);
+            initialTime = Math.max(0, initialTime - elapsed);
+          }
+          setTime(initialTime);
+          return { ...prev, phase: data.phase, status: data.status, startedAt: data.startedAt };
+        }
+        return prev;
+      });
       if (data.phase === 'group_discussion' || data.phase === 'individual_planning') {
         setIsRunning(true);
         setShowBriefing(true);
@@ -123,6 +140,12 @@ export default function SimulationRoom({ user, onLogout }) {
       if (response.ok) {
         const data = await response.json();
         setSession(data.session);
+        let initialTime = data.session.timeLimit * 60 || 0;
+        if (data.session.startedAt) {
+          const elapsed = Math.floor((Date.now() - new Date(data.session.startedAt).getTime()) / 1000);
+          initialTime = Math.max(0, initialTime - elapsed);
+        }
+        setTime(initialTime);
         setIsRunning(true);
       }
     } catch (err) {
@@ -407,7 +430,7 @@ export default function SimulationRoom({ user, onLogout }) {
                   <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>⚠ Failed to submit. Try again.</p>
                 )}
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleSubmitAnswer} disabled={submitStatus === 'submitting'}>
+                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => handleSubmitAnswer('manual')} disabled={submitStatus === 'submitting'}>
                     {submitStatus === 'submitting' ? '⏳ Submitting...' : '📤 Confirm Submit'}
                   </button>
                   <button className="btn btn-secondary" onClick={() => { setShowSubmitConfirm(false); setSubmitStatus(null); }} disabled={submitStatus === 'submitting'}>
@@ -416,6 +439,23 @@ export default function SimulationRoom({ user, onLogout }) {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Pause Overlay for Cadet */}
+      {!isRunning && !showBriefing && session?.phase !== 'waiting' && session?.phase !== 'completed' && isCadet && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', zIndex: 10000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⏸</div>
+            <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--warning)' }}>Session Paused</h2>
+            <p style={{ color: 'var(--gray-300)' }}>
+              Session paused by instructor, waiting for Instructor cmd.
+            </p>
           </div>
         </div>
       )}

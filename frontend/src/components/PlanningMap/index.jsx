@@ -19,7 +19,7 @@ function renderElement(el, idx) {
         </g>
       );
     case 'road':
-      return <rect key={idx} x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? (el.width || 18) : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? (el.width || 18) : Math.abs(el.y2 - el.y1)} fill="#6b7280" />;
+      return <line key={idx} x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={el.width || 18} />;
     case 'house':
       return (
         <g key={idx}>
@@ -146,8 +146,8 @@ function renderElement(el, idx) {
     case 'road_blocked':
       return (
         <g key={idx}>
-          <rect x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? 20 : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? 20 : Math.abs(el.y2 - el.y1)} fill="#6b7280" />
-          <rect x={Math.min(el.x1, el.x2)} y={Math.min(el.y1, el.y2)} width={el.x1 === el.x2 ? 20 : Math.abs(el.x2 - el.x1)} height={el.y1 === el.y2 ? 20 : Math.abs(el.y2 - el.y1)} fill="rgba(239,68,68,0.3)" />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={20} />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="rgba(239,68,68,0.3)" strokeWidth={20} />
           {el.label && <text x={(el.x1 + el.x2) / 2 + 15} y={(el.y1 + el.y2) / 2} fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -186,6 +186,10 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
       if (data.roomId !== roomId) return;
       if (data.type === 'marker') setMarkers(prev => [...prev, data.marker]);
       if (data.type === 'path') setPaths(prev => [...prev, data.path]);
+      if (data.type === 'undo') {
+         if (data.targetType === 'marker') setMarkers(prev => prev.filter(m => m.id !== data.targetId));
+         if (data.targetType === 'path') setPaths(prev => prev.filter(p => p.id !== data.targetId));
+      }
       if (data.type === 'clear') { setMarkers([]); setPaths([]); }
     });
     return () => socket.off('mapUpdate');
@@ -281,6 +285,21 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
     setPaths([]);
     setDrawingPath(null);
     socket.emit('mapUpdate', { roomId, type: 'clear' });
+  };
+
+  const handleUndo = () => {
+    const latestMarker = markers.reduce((max, m) => (m.id > (max?.id || 0) ? m : max), null);
+    const latestPath = paths.reduce((max, p) => (p.id > (max?.id || 0) ? p : max), null);
+
+    if (!latestMarker && !latestPath) return;
+
+    if (latestMarker && (!latestPath || latestMarker.id > latestPath.id)) {
+      setMarkers(prev => prev.filter(m => m.id !== latestMarker.id));
+      socket.emit('mapUpdate', { roomId, type: 'undo', targetId: latestMarker.id, targetType: 'marker' });
+    } else if (latestPath) {
+      setPaths(prev => prev.filter(p => p.id !== latestPath.id));
+      socket.emit('mapUpdate', { roomId, type: 'undo', targetId: latestPath.id, targetType: 'path' });
+    }
   };
 
   const getCursor = () => {
@@ -406,6 +425,12 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
               ✅ Finish Route
             </button>
           )}
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={(e) => { e.stopPropagation(); handleUndo(); }}
+          >
+            ↩ Undo
+          </button>
           <button
             className="btn btn-sm btn-danger"
             onClick={(e) => { e.stopPropagation(); handleClear(); }}
