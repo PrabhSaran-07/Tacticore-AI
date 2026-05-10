@@ -1,6 +1,6 @@
 # TactiCore AI
 
-TactiCore AI is an AI-powered web-based tactical simulation platform designed to modernize the traditional SSB Group Planning Exercise (GPE) and military tactical training system.
+TactiCore AI is an AI-powered web-based tactical simulation platform designed to modernize the traditional SSB Group Planning Exercise (GPE) system.
 
 ## Project Overview
 
