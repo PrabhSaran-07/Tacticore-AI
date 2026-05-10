@@ -29,6 +29,9 @@ export default function SimulationRoom({ user, onLogout }) {
   const [sessionEnded, setSessionEnded] = useState(false);
   const [currentMarkers, setCurrentMarkers] = useState([]);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [submittedCadets, setSubmittedCadets] = useState(new Set());
+  const [showAllSubmitted, setShowAllSubmitted] = useState(false);
+  const [showTimeUp, setShowTimeUp] = useState(false);
 
   const isCadet = user?.role === 'cadet';
   const isAccessor = user?.role === 'accessor';
@@ -130,11 +133,21 @@ export default function SimulationRoom({ user, onLogout }) {
       }).catch(() => {});
     });
 
+    // Listen for cadet submissions (instructor side)
+    socket.on('cadetSubmitted', (data) => {
+      setSubmittedCadets(prev => {
+        const next = new Set(prev);
+        next.add(data.cadetId);
+        return next;
+      });
+    });
+
     return () => {
       socket.off('sessionPhaseChange');
       socket.off('sessionEnded');
       socket.off('simulationStateChange');
       socket.off('userJoined');
+      socket.off('cadetSubmitted');
       socket.emit('leaveRoom', sessionId);
     };
   }, [sessionId]);
@@ -149,6 +162,40 @@ export default function SimulationRoom({ user, onLogout }) {
     }
     return () => { if (interval) clearInterval(interval); };
   }, [isRunning, time, session?.phase]);
+
+  // Check if all cadets submitted
+  useEffect(() => {
+    if (isAccessor && participants.length > 0 && submittedCadets.size >= participants.length && submittedCadets.size > 0) {
+      setShowAllSubmitted(true);
+    }
+  }, [submittedCadets, participants, isAccessor]);
+
+  // Instructor: show time-up when timer reaches 0
+  useEffect(() => {
+    if (isAccessor && time === 0 && isRunning) {
+      setShowTimeUp(true);
+      setIsRunning(false);
+    }
+  }, [time, isRunning, isAccessor]);
+
+  // Beep sound for low time
+  useEffect(() => {
+    if (!isCadet || !isRunning) return;
+    // Beep at exactly 5:00, 3:00, 1:00, and every 10s under 1 min
+    if (time === 300 || time === 180 || time === 60 || (time <= 60 && time > 0 && time % 10 === 0)) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = time <= 60 ? 880 : 660;
+        gain.gain.value = 0.15;
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (e) { /* audio not available */ }
+    }
+  }, [time, isCadet, isRunning]);
 
   // Start session (accessor)
   const handleStartSession = async () => {
@@ -211,6 +258,8 @@ export default function SimulationRoom({ user, onLogout }) {
       });
       if (response.ok) {
         setSubmitStatus('success');
+        // Notify instructor that this cadet submitted
+        socket.emit('cadetSubmitted', { roomId: sessionId, cadetId: user?._id, chestNo: user?.chestNo });
         if (isCadet) {
           const resultStatus = submitType === 'timeOver' ? 'timeOver' : 'submitted';
           setTimeout(() => {
@@ -474,7 +523,13 @@ export default function SimulationRoom({ user, onLogout }) {
             <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{session.sessionCode} · Chest <strong style={{ color: 'var(--success)' }}>{user?.chestNo}</strong></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <div style={{ padding: '0.15rem 0.6rem', borderRadius: '0.25rem', fontFamily: 'monospace', fontWeight: '700', fontSize: '1rem', background: time < 300 ? 'rgba(239,68,68,0.15)' : 'rgba(14,165,233,0.08)', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)', border: `1px solid ${time < 300 ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.15)'}` }}>
+            <div style={{
+              padding: '0.15rem 0.6rem', borderRadius: '0.25rem', fontFamily: 'monospace', fontWeight: '700', fontSize: '1rem',
+              background: time < 180 ? 'rgba(239,68,68,0.15)' : time < 300 ? 'rgba(245,158,11,0.12)' : 'rgba(14,165,233,0.08)',
+              color: time < 180 ? 'var(--danger)' : time < 300 ? 'var(--warning)' : 'var(--primary)',
+              border: `1px solid ${time < 180 ? 'rgba(239,68,68,0.3)' : time < 300 ? 'rgba(245,158,11,0.25)' : 'rgba(14,165,233,0.15)'}`,
+              animation: time < 180 ? 'timerBlink 0.5s infinite' : time < 300 ? 'timerBlink 1s infinite' : 'none'
+            }}>
               {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
             </div>
             <button className="btn btn-sm btn-success" onClick={() => setShowSubmitConfirm(true)} style={{ padding: '0.3rem 0.7rem' }}>📤 Submit</button>
@@ -536,47 +591,86 @@ export default function SimulationRoom({ user, onLogout }) {
         </div>
       </>)}
 
+      {/* Timer blink keyframes */}
+      <style>{`@keyframes timerBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
+
+      {/* ═══ Instructor: Time's Up Overlay ═══ */}
+      {showTimeUp && isAccessor && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⏰</div>
+            <h2 className="card-title" style={{ color: 'var(--warning)', marginBottom: '0.5rem' }}>Time's Up!</h2>
+            <p style={{ color: 'var(--gray-300)', marginBottom: '1rem' }}>Timer has ended. Cadet solutions have been auto-submitted.</p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button className="btn btn-primary" onClick={() => { setShowTimeUp(false); navigate(`/accessor`); }}>📥 Check Submissions</button>
+              <button className="btn btn-danger" onClick={() => { setShowTimeUp(false); handleEndSession(); }}>🏁 End Session</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ All Cadets Submitted Popup ═══ */}
+      {showAllSubmitted && isAccessor && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card" style={{ maxWidth: '500px', width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
+            <h2 className="card-title" style={{ color: 'var(--success)', marginBottom: '0.5rem' }}>All Cadets Submitted!</h2>
+            <p style={{ color: 'var(--gray-300)', marginBottom: '1rem' }}>All {participants.length} cadet(s) have submitted their solutions. You can review submissions and end the session.</p>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <button className="btn btn-primary" onClick={() => { setShowAllSubmitted(false); }}>Continue Monitoring</button>
+              <button className="btn btn-danger" onClick={() => { setShowAllSubmitted(false); handleEndSession(); }}>🏁 End Session</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ══════════ ACCESSOR VIEW ══════════ */}
       {isAccessor && (<>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.75rem', background: 'rgba(5,7,10,0.95)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.75rem', background: 'rgba(5,7,10,0.95)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontWeight: '700', color: 'var(--gray-100)', fontSize: '1rem', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase' }}>Planning Room</span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{session.sessionCode} · Instructor</span>
+            <span style={{ fontWeight: '700', color: 'var(--gray-100)', fontSize: '0.95rem', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase' }}>Instructor Panel</span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--gray-500)' }}>{session.sessionCode}</span>
+            <span style={{ fontSize: '0.6rem', color: 'var(--gray-500)' }}>Submitted: <strong style={{ color: submittedCadets.size === participants.length && participants.length > 0 ? 'var(--success)' : 'var(--warning)' }}>{submittedCadets.size}/{participants.length}</strong></span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <div style={{ padding: '0.15rem 0.6rem', borderRadius: '0.25rem', fontFamily: 'monospace', fontWeight: '700', fontSize: '1rem', background: time < 300 ? 'rgba(239,68,68,0.15)' : 'rgba(14,165,233,0.08)', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <div style={{ padding: '0.1rem 0.5rem', borderRadius: '0.2rem', fontFamily: 'monospace', fontWeight: '700', fontSize: '0.95rem', background: time < 300 ? 'rgba(239,68,68,0.15)' : 'rgba(14,165,233,0.08)', color: time < 300 ? 'var(--danger)' : time < 600 ? 'var(--warning)' : 'var(--primary)' }}>
               {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
             </div>
-            <button onClick={toggleSimulation} className={`btn btn-sm ${isRunning ? 'btn-danger' : 'btn-success'}`}>{isRunning ? '⏸ Pause' : '▶ Resume'}</button>
-            <button className="btn btn-sm btn-danger" onClick={handleEndSession}>🏁 End</button>
-            <button className="btn btn-sm btn-secondary" onClick={() => setShowBriefing(true)}>📋</button>
-            <button className="btn btn-sm btn-secondary" onClick={() => setShowInstructions(true)}>📖</button>
+            <button onClick={toggleSimulation} className={`btn btn-sm ${isRunning ? 'btn-danger' : 'btn-success'}`} style={{ padding: '0.25rem 0.6rem' }}>{isRunning ? '⏸' : '▶'}</button>
+            <button className="btn btn-sm btn-danger" onClick={handleEndSession} style={{ padding: '0.25rem 0.6rem' }}>🏁 End</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => setShowBriefing(true)} style={{ padding: '0.25rem 0.4rem' }}>📋</button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.3rem', background: 'rgba(15,23,42,0.9)', padding: '0.3rem 0.75rem', flexShrink: 0 }}>
-          {[{ mode: 'view', label: '👁 View' }, { mode: 'add_truck', label: '🚒 Truck' }, { mode: 'add_person', label: '👷 Vol.' }, { mode: 'add_pump', label: '💧 Pump' }, { mode: 'draw_path', label: '✏ Route' }].map(({ mode, label }) => (
-            <button key={mode} className={`btn btn-sm ${activeMode === mode ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveMode(mode)}>{label}</button>
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', flex: 1, minHeight: 0, overflow: 'hidden', padding: '0.4rem' }}>
-          <div style={{ overflow: 'hidden', position: 'relative', minHeight: 0, border: '1px solid rgba(14,165,233,0.15)', borderRadius: '0.3rem' }}>
-            <PlanningMap ref={mapRef} roomId={sessionId} activeMode={activeMode} user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <div style={{ overflow: 'hidden', position: 'relative', minHeight: 0, borderRight: '1px solid rgba(14,165,233,0.15)' }}>
+            <PlanningMap ref={mapRef} roomId={sessionId} activeMode="view" user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} readOnly={true} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', overflowY: 'auto', minHeight: 0, paddingLeft: '0.4rem' }}>
-            <ResourcePanel resources={session?.assignedResources} currentMarkers={currentMarkers} />
-            <div className="card" style={{ padding: '0.5rem 0.75rem' }}>
-              <h3 style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--gray-100)', marginBottom: '0.35rem' }}>Cadets ({participants.length})</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                {participants.map((p, idx) => <span key={idx} style={{ padding: '0.1rem 0.45rem', background: 'rgba(59,130,246,0.15)', borderRadius: '1rem', fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '600' }}>{p.chestNo || p.name}</span>)}
+          <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', overflow: 'hidden' }}>
+            {/* Resources compact */}
+            <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)', flexShrink: 0 }}>
+              <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Resources Used</p>
+              {[{ k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 }, { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 }, { k: 'add_pump', i: '💧', l: 'Pumps', mx: session?.assignedResources?.waterPumps || 0 }].map(r => {
+                const used = currentMarkers.filter(m => m.type === r.k).length;
+                return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', padding: '0.1rem 0', color: 'var(--gray-300)' }}><span>{r.i} {r.l}</span><span style={{ fontFamily: 'monospace', fontWeight: '700', color: used >= r.mx ? 'var(--danger)' : 'var(--success)' }}>{used}/{r.mx}</span></div>;
+              })}
+            </div>
+            {/* Cadets — show who submitted */}
+            <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)', flexShrink: 0 }}>
+              <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Cadets ({participants.length})</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+                {participants.map((p, idx) => {
+                  const hasSubmitted = submittedCadets.has(p._id);
+                  return <span key={idx} style={{ padding: '0.08rem 0.4rem', borderRadius: '1rem', fontSize: '0.6rem', fontWeight: '600', background: hasSubmitted ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.15)', color: hasSubmitted ? 'var(--success)' : 'var(--primary)', textDecoration: hasSubmitted ? 'line-through' : 'none' }}>{hasSubmitted ? '✓ ' : ''}{p.chestNo || p.name}</span>;
+                })}
               </div>
             </div>
+            {/* Chat fills rest */}
+            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              <ChatPanel roomId={sessionId} user={user} />
+            </div>
           </div>
-        </div>
-        <div style={{ height: '150px', flexShrink: 0, padding: '0 0.4rem 0.4rem' }}>
-          <ChatPanel roomId={sessionId} user={user} />
         </div>
       </>)}
     </div>
   );
 }
-
