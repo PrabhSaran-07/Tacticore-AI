@@ -158,7 +158,7 @@ function renderElement(el, idx) {
 
 
 
-const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, scenarioId, assignedResources, onMarkersChange }, ref) {
+const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, scenarioId, assignedResources, onMarkersChange, readOnly = false }, ref) {
   const svgRef = useRef(null);
   const [markers, setMarkers] = useState([]);
   const [paths, setPaths] = useState([]);
@@ -211,7 +211,7 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
   };
 
   const handlePointerDown = (e) => {
-    if (activeMode === 'view' || e.button === 1 || e.button === 2) {
+    if (readOnly || activeMode === 'view' || e.button === 1 || e.button === 2) {
       setIsPanning(true);
       setLastPanPos({ x: e.clientX, y: e.clientY });
       return;
@@ -323,10 +323,11 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#0f172a', position: 'relative' }}>
 
       {/* Zoom Controls */}
-      <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.5rem', background: 'rgba(15,23,42,0.8)', padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid var(--gray-700)' }}>
-        <button onClick={() => setZoom(z => Math.min(z * 1.2, 5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>➕</button>
-        <button onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1rem' }}>🔄</button>
-        <button onClick={() => setZoom(z => Math.max(z / 1.2, 0.5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.2rem' }}>➖</button>
+      <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'center', background: 'rgba(15,23,42,0.8)', padding: '0.4rem', borderRadius: '0.5rem', border: '1px solid var(--gray-700)' }}>
+        <button onClick={() => setZoom(z => Math.min(z * 1.2, 5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 }}>➕</button>
+        <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: '700' }}>{Math.round(zoom * 100)}%</span>
+        <button onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.9rem', lineHeight: 1 }}>🔄</button>
+        <button onClick={() => setZoom(z => Math.max(z / 1.2, 0.5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1 }}>➖</button>
       </div>
 
       {/* Scenario name badge */}
@@ -359,7 +360,7 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
           {/* Arrow marker for paths */}
           <defs>
             <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-              <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
+              <polygon points="0 0, 10 3.5, 0 7" fill="#111" />
             </marker>
           </defs>
 
@@ -368,14 +369,14 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
             <g key={path.id}>
               <polyline
                 points={path.points.map(p => `${p.x},${p.y}`).join(' ')}
-                stroke={path.color || '#22d3ee'}
-                strokeWidth="3"
+                stroke="#111"
+                strokeWidth="6"
                 fill="none"
-                strokeDasharray="8,4"
+                strokeDasharray="12,5"
                 markerEnd="url(#arrow)"
               />
               {path.drawnBy && (
-                <text x={path.points[0]?.x || 0} y={(path.points[0]?.y || 0) - 8} fill="#22d3ee" fontSize="8" fontWeight="bold">by {path.drawnBy}</text>
+                <text x={path.points[0]?.x || 0} y={(path.points[0]?.y || 0) - 10} fill="#333" fontSize="8" fontWeight="bold">by {path.drawnBy}</text>
               )}
             </g>
           ))}
@@ -384,10 +385,10 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
           {drawingPath && drawingPath.points.length > 1 && (
             <polyline
               points={drawingPath.points.map(p => `${p.x},${p.y}`).join(' ')}
-              stroke="#22d3ee"
-              strokeWidth="2"
+              stroke="#333"
+              strokeWidth="4"
               fill="none"
-              strokeDasharray="6,3"
+              strokeDasharray="8,4"
               opacity="0.7"
             />
           )}
@@ -406,50 +407,37 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
         </svg>
       </div>
 
-      {/* Bottom bar */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0.4rem 1rem', background: 'rgba(15,23,42,0.95)',
-        borderTop: '1px solid var(--gray-700)', fontSize: '0.75rem', color: 'var(--gray-400)'
-      }}>
-        <span>
-          {activeMode === 'view' && '👁 View Mode — Switch mode above to place resources'}
-          {activeMode === 'add_truck' && '🚒 Click anywhere on the map to place a Fire Truck'}
-          {activeMode === 'add_person' && '👷 Click anywhere on the map to place a Volunteer'}
-          {activeMode === 'add_pump' && '💧 Click anywhere on the map to place a Water Pump'}
-          {activeMode === 'draw_path' && `✏ Drawing route — ${drawingPath ? `${drawingPath.points.length} points` : 'Click to start'}`}
-        </span>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {activeMode === 'draw_path' && drawingPath && (
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={(e) => {
+      {/* Bottom bar — hidden in readOnly mode */}
+      {!readOnly && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0.35rem 0.75rem', background: 'rgba(15,23,42,0.95)',
+          borderTop: '1px solid var(--gray-700)', fontSize: '0.7rem', color: 'var(--gray-400)'
+        }}>
+          <span>
+            {activeMode === 'view' && '👁 View Mode'}
+            {activeMode === 'add_truck' && '🚒 Click map to place Fire Truck'}
+            {activeMode === 'add_person' && '👷 Click map to place Volunteer'}
+            {activeMode === 'add_pump' && '💧 Click map to place Water Pump'}
+            {activeMode === 'draw_path' && `✏ Route — ${drawingPath ? `${drawingPath.points.length} pts` : 'Click to start'}`}
+          </span>
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            {activeMode === 'draw_path' && drawingPath && (
+              <button className="btn btn-sm btn-primary" onClick={(e) => {
                 e.stopPropagation();
                 if (drawingPath) {
-                  const newPath = { id: Date.now(), points: drawingPath.points, color: '#22d3ee', drawnBy: user?.chestNo || user?.name || 'Unknown' };
+                  const newPath = { id: Date.now(), points: drawingPath.points, color: '#111', drawnBy: user?.chestNo || user?.name || 'Unknown' };
                   setPaths(prev => [...prev, newPath]);
                   socket.emit('mapUpdate', { roomId, type: 'path', path: newPath, userId: user?._id, chestNo: user?.chestNo });
                   setDrawingPath(null);
                 }
-              }}
-            >
-              ✅ Finish Route
-            </button>
-          )}
-          <button
-            className="btn btn-sm btn-secondary"
-            onClick={(e) => { e.stopPropagation(); handleUndo(); }}
-          >
-            ↩ Undo
-          </button>
-          <button
-            className="btn btn-sm btn-danger"
-            onClick={(e) => { e.stopPropagation(); handleClear(); }}
-          >
-            🗑 Clear All
-          </button>
+              }}>✅ Done</button>
+            )}
+            <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleUndo(); }}>↩ Undo</button>
+            <button className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); handleClear(); }}>🗑 Clear</button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 });

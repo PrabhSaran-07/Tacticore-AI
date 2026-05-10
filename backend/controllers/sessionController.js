@@ -94,6 +94,43 @@ exports.deleteSession = async (req, res) => {
   }
 };
 
+exports.duplicateSession = async (req, res) => {
+  try {
+    const source = await Session.findById(req.params.id);
+    if (!source) return res.status(404).json({ message: 'Session not found' });
+
+    let sessionCode = generateSessionCode();
+    while (await Session.findOne({ sessionCode })) sessionCode = generateSessionCode();
+
+    const duplicate = new Session({
+      sessionCode,
+      accessor: req.user.id,
+      title: `${source.title || 'Session'} (Copy)`,
+      scenarioId: source.scenarioId,
+      problemDescription: source.problemDescription,
+      difficulty: source.difficulty,
+      assignedResources: source.assignedResources,
+      constraints: source.constraints,
+      problems: source.problems,
+      timeLimit: source.timeLimit,
+      phaseDurations: source.phaseDurations,
+      groupConfig: source.groupConfig,
+      evalWeights: source.evalWeights,
+      customRubric: source.customRubric,
+      optimumSolution: source.optimumSolution,
+      status: 'waiting',
+      phase: 'waiting',
+      participants: [],
+      submissions: [],
+      behavioralLog: []
+    });
+    await duplicate.save();
+    res.status(201).json({ session: duplicate });
+  } catch (error) {
+    res.status(500).json({ message: 'Error duplicating session', error: error.message });
+  }
+};
+
 // ═════════════════════════════════════════════
 // PHASE CONTROL
 // ═════════════════════════════════════════════

@@ -10,6 +10,7 @@ router.get('/my-sessions', protect, authorize('accessor'), sc.getAccessorSession
 router.get('/my-results', protect, authorize('cadet'), sc.getMyResults);
 router.get('/:id', protect, sc.getSessionById);
 router.delete('/:id', protect, authorize('accessor'), sc.deleteSession);
+router.post('/:id/duplicate', protect, authorize('accessor'), sc.duplicateSession);
 
 // Phase control
 router.post('/:id/start', protect, authorize('accessor'), sc.startSession);

@@ -269,6 +269,23 @@ export default function AccessorPortal() {
     }
   };
 
+  const handleDuplicateSession = async (sessionId) => {
+    try {
+      const response = await fetch(`${API}/api/sessions/${sessionId}/duplicate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.session) {
+        setSessions([data.session, ...sessions]);
+      } else {
+        alert(data.message || 'Failed to duplicate session');
+      }
+    } catch (err) {
+      console.error('Error duplicating session:', err);
+    }
+  };
+
   const fetchSubmissions = async (session) => {
     setSelectedSession(session);
     setLoadingSubmissions(true);
@@ -341,6 +358,7 @@ export default function AccessorPortal() {
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button className="btn btn-sm btn-success" onClick={() => navigate(`/simulation?sessionId=${session._id}`)}>▶ Enter Session</button>
                     <button className="btn btn-sm btn-primary" onClick={() => fetchSubmissions(session)}>📥 Submissions</button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => handleDuplicateSession(session._id)} title="Duplicate session">📋 Duplicate</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDeleteSession(session._id)}>🗑</button>
                   </div>
                 </div>
