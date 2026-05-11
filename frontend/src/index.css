@@ -60,7 +60,11 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.2); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(14,165,233,0.4); }
-html { scrollbar-width: thin; scrollbar-color: rgba(14,165,233,0.2) transparent; }
+html { 
+  scrollbar-width: thin; 
+  scrollbar-color: rgba(14,165,233,0.2) transparent;
+  font-size: 150%; /* 1.5x scale for everything using rem */
+}
 
 body {
   font-family: 'Inter', system-ui, sans-serif;

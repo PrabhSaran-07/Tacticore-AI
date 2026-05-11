@@ -5,7 +5,7 @@ const { analyzeSubmission, analyzeFullSession } = require('../services/olqAnalyz
 const generateSessionCode = () => crypto.randomBytes(3).toString('hex').toUpperCase();
 
 // ── Phase order ──
-const PHASE_ORDER = ['waiting','briefing','individual_planning','group_discussion','consolidation','presentation','qa','completed'];
+const PHASE_ORDER = ['waiting', 'briefing', 'individual_planning', 'group_discussion', 'consolidation', 'presentation', 'qa', 'completed'];
 const PHASE_TIMESTAMP_MAP = {
   briefing: 'briefingStart', individual_planning: 'individualStart',
   group_discussion: 'groupStart', consolidation: 'consolidationStart',
@@ -396,7 +396,7 @@ exports.generateAIReport = async (req, res) => {
 
     // Compute group comparison percentiles
     const allScores = {};
-    const OLQ_KEYS = ['EI','RA','OA','PE','SA','C','SR','IN','SC','SD','AIG','L','D','Cour'];
+    const OLQ_KEYS = ['EI', 'RA', 'OA', 'PE', 'SA', 'C', 'SR', 'IN', 'SC', 'SD', 'AIG', 'L', 'D', 'Cour'];
     OLQ_KEYS.forEach(k => { allScores[k] = reports.map(r => r.olqRadar[k]).sort((a, b) => a - b); });
     reports.forEach(r => {
       r.groupComparison = {};
@@ -460,6 +460,6 @@ exports.getSessionReplay = async (req, res) => {
 
 // ── Helper ──
 function getColorForCadet(idx) {
-  const colors = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
+  const colors = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
   return colors[Math.abs(idx) % colors.length];
 }

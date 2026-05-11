@@ -15,10 +15,10 @@ export default function Navbar({ onLogout, user }) {
 
   return (
     <nav style={{
-      background: 'rgba(5, 7, 10, 0.85)',
+      background: 'var(--gray-900)',
       backdropFilter: 'blur(10px)',
-      borderBottom: '1px solid rgba(14, 165, 233, 0.2)',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)'
+      borderBottom: '1px solid var(--gray-700)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
     }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '4rem' }}>
@@ -34,7 +34,7 @@ export default function Navbar({ onLogout, user }) {
               <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.25rem', fontFamily: 'Rajdhani, sans-serif' }}>O</span>
             </div>
             <div>
-              <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'white', margin: 0, padding: 0 }}>OpSim GPE</h1>
+              <h1 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gray-100)', margin: 0, padding: 0 }}>OpSim GPE</h1>
               <p style={{ fontSize: '0.65rem', color: 'var(--primary)', margin: 0, padding: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Instructor Panel</p>
             </div>
           </Link>
