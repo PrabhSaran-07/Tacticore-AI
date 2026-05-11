@@ -44,7 +44,7 @@ export default function Dashboard({ user }) {
           </div>
           {sessions.length > 0 ? (
             <div>
-              <div style={{ height: '8px', display: 'flex', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+              <div style={{ height: '16px', display: 'flex', borderRadius: '8px', overflow: 'hidden', marginBottom: '0.75rem' }}>
                  <div style={{ width: `${(sessions.filter(s => s.phase !== 'completed').length / sessions.length) * 100}%`, background: 'var(--warning)' }} />
                  <div style={{ width: `${(sessions.filter(s => s.phase === 'completed').length / sessions.length) * 100}%`, background: 'var(--success)' }} />
               </div>
@@ -63,7 +63,7 @@ export default function Dashboard({ user }) {
             <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>OLQs Analyzed</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--gray-100)', lineHeight: 1 }}>14</div>
-              <svg width="60" height="30" viewBox="0 0 60 30">
+              <svg width="120" height="60" viewBox="0 0 60 30">
                 <rect x="0" y="15" width="8" height="15" fill="var(--primary)" opacity="0.6" />
                 <rect x="12" y="10" width="8" height="20" fill="var(--primary)" opacity="0.8" />
                 <rect x="24" y="20" width="8" height="10" fill="var(--primary)" opacity="0.5" />
@@ -80,7 +80,7 @@ export default function Dashboard({ user }) {
             <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>System Health</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success)', lineHeight: 1 }}>100%</div>
-              <svg width="80" height="30" viewBox="0 0 80 30">
+              <svg width="160" height="60" viewBox="0 0 80 30">
                 <polyline points="0,20 15,22 30,15 45,25 60,10 80,18" fill="none" stroke="var(--success)" strokeWidth="2" strokeLinejoin="round" />
                 <circle cx="80" cy="18" r="3" fill="var(--success)" />
               </svg>

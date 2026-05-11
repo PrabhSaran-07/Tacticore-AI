@@ -116,7 +116,7 @@ export default function SimulationRoom({ user, onLogout }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
           body: JSON.stringify({ markers, paths, note: 'Auto-submitted: session ended by instructor' })
-        }).catch(() => {});
+        }).catch(() => { });
       }
       setSessionEnded(true);
       setIsRunning(false);
@@ -130,7 +130,7 @@ export default function SimulationRoom({ user, onLogout }) {
         headers: { 'Authorization': `Bearer ${getToken()}` }
       }).then(r => r.json()).then(d => {
         if (d.participants) setParticipants(d.participants);
-      }).catch(() => {});
+      }).catch(() => { });
     });
 
     // Listen for cadet submissions (instructor side)
@@ -450,7 +450,16 @@ export default function SimulationRoom({ user, onLogout }) {
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div><strong>Resources:</strong><ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}><li>🚒 {session.assignedResources?.fireTrucks || 0} Fire Trucks</li><li>👥 {session.assignedResources?.volunteers || 0} Volunteers</li><li>💧 {session.assignedResources?.waterPumps || 0} Water Pumps</li></ul></div>
+                <div><strong>Resources:</strong><ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}>
+                  {session.assignedResources?.fireTrucks > 0 && <li>🚒 {session.assignedResources.fireTrucks} Fire Trucks</li>}
+                  {session.assignedResources?.volunteers > 0 && <li>👷 {session.assignedResources.volunteers} Volunteers</li>}
+                  {session.assignedResources?.waterPumps > 0 && <li>💧 {session.assignedResources.waterPumps} Water Pumps</li>}
+                  {session.assignedResources?.ambulance > 0 && <li>🚑 {session.assignedResources.ambulance} Ambulance</li>}
+                  {session.assignedResources?.police > 0 && <li>🚓 {session.assignedResources.police} Police</li>}
+                  {session.assignedResources?.citizen > 0 && <li>🚶 {session.assignedResources.citizen} Citizens</li>}
+                  {session.assignedResources?.car > 0 && <li>🚗 {session.assignedResources.car} Cars</li>}
+                  {session.assignedResources?.bike > 0 && <li>🚲 {session.assignedResources.bike} Bikes</li>}
+                </ul></div>
                 <div><strong>Info:</strong><ul style={{ listStyle: 'none', padding: 0, marginTop: '0.5rem' }}><li>⏱ {session.timeLimit} min</li><li>🎖 Chest No: {user?.chestNo || 'N/A'}</li></ul></div>
               </div>
             </div>
@@ -572,7 +581,16 @@ export default function SimulationRoom({ user, onLogout }) {
             {/* Resources */}
             <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
               <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources</p>
-              {[{ k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 }, { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 }, { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 }].map(r => {
+              {[
+                { k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
+                { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
+                { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 },
+                { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
+                { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
+                { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
+                { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
+                { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 }
+              ].filter(r => r.mx > 0).map(r => {
                 const used = currentMarkers.filter(m => m.type === r.k).length;
                 const rem = Math.max(0, r.mx - used);
                 return (
@@ -649,7 +667,16 @@ export default function SimulationRoom({ user, onLogout }) {
             {/* Resources compact */}
             <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)', flexShrink: 0 }}>
               <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Resources Used</p>
-              {[{ k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 }, { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 }, { k: 'add_pump', i: '💧', l: 'Pumps', mx: session?.assignedResources?.waterPumps || 0 }].map(r => {
+              {[
+                { k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
+                { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
+                { k: 'add_pump', i: '💧', l: 'Pumps', mx: session?.assignedResources?.waterPumps || 0 },
+                { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
+                { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
+                { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
+                { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
+                { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 }
+              ].filter(r => r.mx > 0).map(r => {
                 const used = currentMarkers.filter(m => m.type === r.k).length;
                 return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', padding: '0.1rem 0', color: 'var(--gray-300)' }}><span>{r.i} {r.l}</span><span style={{ fontFamily: 'monospace', fontWeight: '700', color: used >= r.mx ? 'var(--danger)' : 'var(--success)' }}>{used}/{r.mx}</span></div>;
               })}
