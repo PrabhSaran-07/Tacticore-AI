@@ -62,57 +62,65 @@ function renderSubmissionElement(el, idx) {
         </g>
       );
     case 'building':
+      const isSch = el.label?.includes('School');
       return (
-        <g key={idx}>
-          <rect x={el.x} y={el.y} width={el.w || 80} height={el.h || 60} rx="4" fill={el.fill || '#8b7355'} stroke="#a0856e" strokeWidth="1.5" />
-          {el.label && <text x={el.x + (el.w || 80) / 2} y={el.y - 8} textAnchor="middle" fill="#f3f4f6" fontSize="11" fontWeight="bold">{el.label}</text>}
-          {el.sublabel && <text x={el.x + (el.w || 80) / 2} y={el.y + (el.h || 60) / 2 + 4} textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">{el.sublabel}</text>}
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <text fontSize="45" textAnchor="middle">{isSch ? '🏫' : '🏢'}</text>
+          {el.label && <text y="-35" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="12" fontWeight="bold">{el.label}</text>}
         </g>
       );
     case 'poi':
       return (
         <g key={idx}>
-          <text x={el.x} y={el.y} textAnchor="middle" fontSize="22">{el.icon}</text>
-          {el.label && <text x={el.x} y={el.y + 18} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{el.label}</text>}
-        </g>
-      );
-    case 'flood_zone':
-      return (
-        <g key={idx}>
-          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx="8" fill="rgba(30,144,255,0.25)" stroke="#1e90ff" strokeWidth="2" strokeDasharray="8,4" />
-          {el.label && <text x={el.x + el.w / 2} y={el.y + el.h / 2} textAnchor="middle" fill="#93c5fd" fontSize="14" fontWeight="bold">{el.label}</text>}
-        </g>
-      );
-    case 'bridge':
-      return (
-        <g key={idx}>
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#ef4444" strokeWidth="6" strokeDasharray="6,6" />
-          {el.label && <text x={(el.x1 + el.x2) / 2} y={el.y1 - 8} textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="bold">{el.label}</text>}
-        </g>
-      );
-    case 'border_fence':
-      return (
-        <g key={idx}>
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#f59e0b" strokeWidth="4" strokeDasharray="12,6" />
-          <line x1={el.x1} y1={el.y1 - 1} x2={el.x2} y2={el.y2 - 1} stroke="#fbbf24" strokeWidth="1" />
+          <text x={el.x} y={el.y} textAnchor="middle" fontSize="24">{el.icon}</text>
+          {el.label && <text x={el.x} y={el.y + 25} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="10" fontWeight="bold">{el.label}</text>}
         </g>
       );
     case 'label':
-      return <text key={idx} x={el.x} y={el.y} textAnchor="middle" fill={el.color || '#ccc'} fontSize="11" fontWeight="bold" letterSpacing="0.1em">{el.text}</text>;
-    case 'checkpoint':
       return (
         <g key={idx}>
-          <rect x={el.x - 15} y={el.y - 10} width="30" height="20" rx="3" fill="#f59e0b" opacity="0.8" />
-          <text x={el.x} y={el.y - 15} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>
+          <text x={el.x} y={el.y} textAnchor="middle" fill={el.color || '#ccc'} fontSize={el.size || 11} fontWeight="800">
+            {el.text}
+          </text>
+        </g>
+      );
+    case 'start_point':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <circle r="12" fill="rgba(34,197,94,0.3)" stroke="#22c55e" strokeWidth="2" />
+          <text y="25" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">{el.label}</text>
+        </g>
+      );
+    case 'end_point':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <rect x="-10" y="-10" width="20" height="20" fill="rgba(59,130,246,0.3)" stroke="#3b82f6" strokeWidth="2" />
+          <text y="25" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">{el.label}</text>
         </g>
       );
     case 'threat':
       return (
         <g key={idx}>
-          <circle cx={el.x} cy={el.y} r="20" fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
+          <circle cx={el.x} cy={el.y} r="18" fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,2" />
           <text x={el.x} y={el.y + 5} textAnchor="middle" fontSize="18">{el.icon}</text>
-          {el.label && <text x={el.x} y={el.y + 28} textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
-          {el.sublabel && <text x={el.x} y={el.y + 38} textAnchor="middle" fill="#ef4444" fontSize="8">{el.sublabel}</text>}
+          {el.label && <text x={el.x} y={el.y + 28} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="9" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'house':
+      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🏠</text>;
+    case 'tree_pine':
+      return <text key={idx} x={el.x} y={el.y} fontSize="35" textAnchor="middle">🌲</text>;
+    case 'tree_palm':
+      return <text key={idx} x={el.x} y={el.y} fontSize="35" textAnchor="middle">🌴</text>;
+    case 'boat':
+      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🚤</text>;
+    case 'fire':
+      return <text key={idx} x={el.x} y={el.y} fontSize="35" textAnchor="middle">🔥</text>;
+    case 'bridge':
+      return (
+        <g key={idx} transform={`translate(${el.x1},${el.y1})`}>
+          <text fontSize="45" textAnchor="middle">🌉</text>
+          {el.label && <text y="-35" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="12" fontWeight="bold">{el.label}</text>}
         </g>
       );
     case 'vegetation':
@@ -189,9 +197,21 @@ function SubmissionMap({ markers = [], paths = [], scenarioId }) {
       <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: template.terrain || '#3d6b47', display: 'flex', alignItems: 'center' }}>
         <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
           <rect x="0" y="0" width={W} height={H} fill={template.terrain || '#3d6b47'} />
+          
+          {template.bgImage && (
+            <image href={template.bgImage} x="0" y="0" width={W} height={H} preserveAspectRatio="none" />
+          )}
 
-          {/* Scenario backdrop (faded) */}
-          {template.elements.map((el, idx) => renderSubmissionElement(el, idx))}
+          {/* Scenario backdrop (faded if image exists, or normal) */}
+          {template.elements.map((el, idx) => {
+             const isInfra = ['road', 'curved_road', 'river', 'track', 'vegetation', 'tree_pine', 'tree_palm', 'house', 'building', 'bridge', 'zone'].includes(el.type);
+             if (template.bgImage && isInfra) return null;
+             return (
+               <g key={idx} opacity={template.bgImage ? 1 : 0.6}>
+                 {renderSubmissionElement(el, idx)}
+               </g>
+             );
+          })}
 
           {/* Arrow def */}
           <defs>
