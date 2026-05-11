@@ -34,18 +34,59 @@ export default function Dashboard({ user }) {
         <p style={{ color: 'var(--gray-400)' }}>Welcome back, {user?.name || 'Instructor'}!</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.05))', border: '1px solid rgba(59,130,246,0.3)' }}>
-          <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>{loading ? '-' : sessions.length}</div>
-          <div style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Sessions Created</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+        <div className="card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.05))', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Sessions Created</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '0.75rem' }}>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--gray-100)', lineHeight: 1 }}>{loading ? '-' : sessions.length}</div>
+            </div>
+          </div>
+          {sessions.length > 0 ? (
+            <div>
+              <div style={{ height: '8px', display: 'flex', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                 <div style={{ width: `${(sessions.filter(s => s.phase !== 'completed').length / sessions.length) * 100}%`, background: 'var(--warning)' }} />
+                 <div style={{ width: `${(sessions.filter(s => s.phase === 'completed').length / sessions.length) * 100}%`, background: 'var(--success)' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.7rem', color: 'var(--gray-400)' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}><span style={{ color: 'var(--warning)' }}>■</span> Active ({sessions.filter(s => s.phase !== 'completed').length})</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}><span style={{ color: 'var(--success)' }}>■</span> Completed ({sessions.filter(s => s.phase === 'completed').length})</span>
+              </div>
+            </div>
+          ) : (
+             <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>No sessions yet</div>
+          )}
         </div>
-        <div className="card">
-          <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>14</div>
-          <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase' }}>OLQs Analyzed</div>
+        
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>OLQs Analyzed</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--gray-100)', lineHeight: 1 }}>14</div>
+              <svg width="60" height="30" viewBox="0 0 60 30">
+                <rect x="0" y="15" width="8" height="15" fill="var(--primary)" opacity="0.6" />
+                <rect x="12" y="10" width="8" height="20" fill="var(--primary)" opacity="0.8" />
+                <rect x="24" y="20" width="8" height="10" fill="var(--primary)" opacity="0.5" />
+                <rect x="36" y="5" width="8" height="25" fill="var(--primary)" opacity="0.9" />
+                <rect x="48" y="12" width="8" height="18" fill="var(--primary)" />
+              </svg>
+            </div>
+          </div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>Officer Like Qualities processed over recent sessions</div>
         </div>
-        <div className="card">
-          <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--success)' }}>100%</div>
-          <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase' }}>System Health</div>
+        
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ color: 'var(--gray-400)', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.5rem' }}>System Health</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--success)', lineHeight: 1 }}>100%</div>
+              <svg width="80" height="30" viewBox="0 0 80 30">
+                <polyline points="0,20 15,22 30,15 45,25 60,10 80,18" fill="none" stroke="var(--success)" strokeWidth="2" strokeLinejoin="round" />
+                <circle cx="80" cy="18" r="3" fill="var(--success)" />
+              </svg>
+            </div>
+          </div>
+          <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)' }}>Tracks real-time API latency, websocket stability, and server uptime.</div>
         </div>
       </div>
 

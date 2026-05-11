@@ -1,19 +1,41 @@
 import { useState } from 'react';
 
 export default function ResourcePanel({ resources: assignedResources, currentMarkers = [] }) {
-  const volunteersUsed = currentMarkers.filter(m => m.type === 'add_person').length;
-  const trucksUsed = currentMarkers.filter(m => m.type === 'add_truck').length;
-  const pumpsUsed = currentMarkers.filter(m => m.type === 'add_pump').length;
+  const maxVolunteers = assignedResources?.volunteers || 0;
+  const maxTrucks = assignedResources?.fireTrucks || 0;
+  const maxPumps = assignedResources?.waterPumps || 0;
+  const maxAmbulance = assignedResources?.ambulance || 0;
+  const maxPolice = assignedResources?.police || 0;
+  const maxCitizen = assignedResources?.citizen || 0;
+  const maxCar = assignedResources?.car || 0;
+  const maxBike = assignedResources?.bike || 0;
 
-  const maxVolunteers = assignedResources?.volunteers || 4;
-  const maxTrucks = assignedResources?.fireTrucks || 1;
-  const maxPumps = assignedResources?.waterPumps || 1;
-
-  const resources = [
-    { name: 'Volunteers', current: Math.max(0, maxVolunteers - volunteersUsed), max: maxVolunteers, icon: '👥' },
-    { name: 'Fire Trucks', current: Math.max(0, maxTrucks - trucksUsed), max: maxTrucks, icon: '🚒' },
-    { name: 'Water Pumps', current: Math.max(0, maxPumps - pumpsUsed), max: maxPumps, icon: '💧' },
+  const baseResources = [
+    { type: 'add_person', name: 'Volunteers', max: maxVolunteers, icon: '👥' },
+    { type: 'add_truck', name: 'Fire Trucks', max: maxTrucks, icon: '🚒' },
+    { type: 'add_pump', name: 'Water Pumps', max: maxPumps, icon: '💧' },
+    { type: 'add_ambulance', name: 'Ambulances', max: maxAmbulance, icon: '🚑' },
+    { type: 'add_police', name: 'Police', max: maxPolice, icon: '🚓' },
+    { type: 'add_citizen', name: 'Citizens', max: maxCitizen, icon: '🚶' },
+    { type: 'add_car', name: 'Cars', max: maxCar, icon: '🚗' },
+    { type: 'add_bike', name: 'Bikes', max: maxBike, icon: '🚲' },
   ];
+
+  const resources = baseResources
+    .filter(r => r.max > 0)
+    .map(r => ({
+      name: r.name,
+      current: Math.max(0, r.max - currentMarkers.filter(m => m.type === r.type).length),
+      max: r.max,
+      icon: r.icon
+    }));
+
+  const customItems = (assignedResources?.customItems || []).map(item => {
+    const used = currentMarkers.filter(m => m.type === `add_custom_${item.name}`).length;
+    return { name: item.name, current: Math.max(0, item.quantity - used), max: item.quantity, icon: '📦' };
+  });
+
+  const allResources = [...resources, ...customItems];
 
   return (
     <div className="card">
@@ -22,7 +44,7 @@ export default function ResourcePanel({ resources: assignedResources, currentMar
       </div>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {resources.map((resource, idx) => (
+        {allResources.map((resource, idx) => (
           <div key={idx}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <label style={{ fontSize: '0.875rem', color: 'var(--gray-300)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
