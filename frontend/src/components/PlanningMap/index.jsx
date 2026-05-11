@@ -14,141 +14,159 @@ function renderElement(el, idx) {
     case 'zone':
       return (
         <g key={idx}>
-          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx={8} fill={el.fill || '#7c6a4a'} opacity={0.8} />
-          {el.label && <text x={el.x + el.w / 2} y={el.y + (el.labelY || -8)} textAnchor="middle" fill="#f3f4f6" fontSize="13" fontWeight="bold">{el.label}</text>}
+          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx={8} fill={el.fill === '#3b82f6' ? 'url(#seaPattern)' : (el.fill || '#7c6a4a')} opacity={0.8} />
+          {el.label && <text x={el.x + el.w / 2} y={el.y + (el.labelY || -8)} textAnchor="middle" fill="#f3f4f6" fontSize="13" fontWeight="bold" filter="drop-shadow(0px 1px 1px rgba(0,0,0,0.5))">{el.label}</text>}
         </g>
       );
     case 'road':
-      return <line key={idx} x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={el.width || 18} />;
-    case 'house':
+      const isHighway = el.width > 30;
       return (
         <g key={idx}>
-          <rect x={el.x} y={el.y} width="40" height="38" rx="4" fill="#8b7355" stroke="#a0856e" strokeWidth="1.5" />
-          <polygon points={`${el.x},${el.y} ${el.x+40},${el.y} ${el.x+20},${el.y-16}`} fill="#6b5a3a" />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke={isHighway ? "#333" : "#8b7355"} strokeWidth={el.width || 18} strokeLinecap="round" />
+          {isHighway && (
+            <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#fff" strokeWidth="2" strokeDasharray="15,15" opacity="0.6" />
+          )}
         </g>
       );
+    case 'house':
+      return <text key={idx} x={el.x} y={el.y} fontSize="45" textAnchor="middle">🏠</text>;
+    case 'tree_pine':
+      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🌲</text>;
+    case 'tree_palm':
+      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🌴</text>;
+    case 'boat':
+      return <text key={idx} x={el.x} y={el.y} fontSize="45" textAnchor="middle">🚤</text>;
     case 'fire':
       return (
         <g key={idx}>
-          <ellipse cx={el.x} cy={el.y} rx="18" ry="22" fill="#ff4500" opacity="0.7" />
-          <ellipse cx={el.x} cy={el.y} rx="10" ry="14" fill="#ffcc00" opacity="0.8" />
+          <ellipse cx={el.x} cy={el.y} rx="18" ry="22" fill="#ff4500" opacity="0.7">
+            <animate attributeName="rx" values="18;20;18" dur="0.5s" repeatCount="indefinite" />
+          </ellipse>
+          <ellipse cx={el.x} cy={el.y} rx="10" ry="14" fill="#ffcc00" opacity="0.8">
+            <animate attributeName="rx" values="10;12;10" dur="0.4s" repeatCount="indefinite" />
+          </ellipse>
           <text x={el.x} y={el.y + 3} textAnchor="middle" fontSize="18">🔥</text>
         </g>
       );
     case 'river':
       return (
         <g key={idx}>
-          <path d={el.path} stroke="#1e90ff" strokeWidth="30" fill="none" opacity="0.7" strokeLinecap="round" />
+          <path d={el.path} stroke="url(#riverGradient)" strokeWidth="30" fill="none" opacity="0.8" strokeLinecap="round" />
           {el.label && <text x={el.labelX || 400} y={el.labelY || 200} textAnchor="middle" fill="#93c5fd" fontSize="12" fontWeight="bold" transform={el.labelRotate ? `rotate(${el.labelRotate},${el.labelX},${el.labelY})` : undefined}>{el.label}</text>}
         </g>
       );
     case 'track':
       return (
         <g key={idx}>
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#374151" strokeWidth="12" strokeDasharray="20,8" />
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#9ca3af" strokeWidth="3" strokeDasharray="4,24" strokeDashoffset="14" />
-          <text x={(el.x1 + el.x2) / 2 + 200} y={(el.y1 + el.y2) / 2 + 10} fill="#f3f4f6" fontSize="12" fontWeight="bold">🚂 TRAIN TRACK</text>
-        </g>
-      );
-    case 'danger_zone':
-      return (
-        <g key={idx}>
-          <ellipse cx={el.cx} cy={el.cy} rx={el.rx} ry={el.ry} fill="#ef4444" opacity="0.5" />
-          <text x={el.cx} y={el.cy + 4} textAnchor="middle" fontSize="11" fill="#fca5a5" fontWeight="bold">{el.label}</text>
-        </g>
-      );
-    case 'vehicle':
-      return (
-        <g key={idx}>
-          <text x={el.x} y={el.y} textAnchor="middle" fontSize="28">{el.icon}</text>
-          {el.sublabel && <text x={el.x} y={el.y + 18} textAnchor="middle" fill="#fbbf24" fontSize="10">{el.sublabel}</text>}
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#374151" strokeWidth="14" strokeLinecap="butt" />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#9ca3af" strokeWidth="14" strokeDasharray="4,16" />
+          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#64748b" strokeWidth="3" opacity="0.8" />
+          <text x={(el.x1 + el.x2) / 2} y={(el.y1 + el.y2) / 2 - 15} textAnchor="middle" fill="#f3f4f6" fontSize="10" fontWeight="bold" filter="drop-shadow(1px 1px 1px black)">🛤 RAILWAY</text>
         </g>
       );
     case 'building':
+      const isSch = el.label?.includes('School');
       return (
-        <g key={idx}>
-          <rect x={el.x} y={el.y} width={el.w || 80} height={el.h || 60} rx="4" fill={el.fill || '#8b7355'} stroke="#a0856e" strokeWidth="1.5" />
-          {el.label && <text x={el.x + (el.w || 80) / 2} y={el.y - 8} textAnchor="middle" fill="#f3f4f6" fontSize="11" fontWeight="bold">{el.label}</text>}
-          {el.sublabel && <text x={el.x + (el.w || 80) / 2} y={el.y + (el.h || 60) / 2 + 4} textAnchor="middle" fill="#fbbf24" fontSize="9" fontWeight="bold">{el.sublabel}</text>}
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <text fontSize="65" textAnchor="middle">{isSch ? '🏫' : '🏢'}</text>
+          {el.label && <text y="-45" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="14" fontWeight="bold" filter="drop-shadow(1px 1px 1px black)">{el.label}</text>}
         </g>
       );
     case 'poi':
       return (
         <g key={idx}>
-          <text x={el.x} y={el.y} textAnchor="middle" fontSize="22">{el.icon}</text>
-          {el.label && <text x={el.x} y={el.y + 18} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{el.label}</text>}
-        </g>
-      );
-    case 'flood_zone':
-      return (
-        <g key={idx}>
-          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx="8" fill="rgba(30,144,255,0.25)" stroke="#1e90ff" strokeWidth="2" strokeDasharray="8,4" />
-          {el.label && <text x={el.x + el.w / 2} y={el.y + el.h / 2} textAnchor="middle" fill="#93c5fd" fontSize="14" fontWeight="bold">{el.label}</text>}
-        </g>
-      );
-    case 'bridge':
-      return (
-        <g key={idx}>
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#ef4444" strokeWidth="6" strokeDasharray="6,6" />
-          {el.label && <text x={(el.x1 + el.x2) / 2} y={el.y1 - 8} textAnchor="middle" fill="#fca5a5" fontSize="10" fontWeight="bold">{el.label}</text>}
-        </g>
-      );
-    case 'border_fence':
-      return (
-        <g key={idx}>
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#f59e0b" strokeWidth="4" strokeDasharray="12,6" />
-          <line x1={el.x1} y1={el.y1 - 1} x2={el.x2} y2={el.y2 - 1} stroke="#fbbf24" strokeWidth="1" />
-        </g>
-      );
-    case 'label':
-      return <text key={idx} x={el.x} y={el.y} textAnchor="middle" fill={el.color || '#ccc'} fontSize="11" fontWeight="bold" letterSpacing="0.1em">{el.text}</text>;
-    case 'checkpoint':
-      return (
-        <g key={idx}>
-          <rect x={el.x - 15} y={el.y - 10} width="30" height="20" rx="3" fill="#f59e0b" opacity="0.8" />
-          <text x={el.x} y={el.y - 15} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>
-        </g>
-      );
-    case 'threat':
-      return (
-        <g key={idx}>
-          <circle cx={el.x} cy={el.y} r="20" fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-          <text x={el.x} y={el.y + 5} textAnchor="middle" fontSize="18">{el.icon}</text>
-          {el.label && <text x={el.x} y={el.y + 28} textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
-          {el.sublabel && <text x={el.x} y={el.y + 38} textAnchor="middle" fill="#ef4444" fontSize="8">{el.sublabel}</text>}
+          <text x={el.x} y={el.y} textAnchor="middle" fontSize="24">{el.icon}</text>
+          {el.label && <text x={el.x} y={el.y + 25} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="10" fontWeight="bold">{el.label}</text>}
         </g>
       );
     case 'vegetation':
       return (
         <g key={idx}>
-          <rect x={el.x} y={el.y} width={el.w} height={el.h} rx="6" fill="rgba(34,197,94,0.15)" stroke="#22c55e" strokeWidth="1" strokeDasharray="4,4" />
-          {el.label && <text x={el.x + el.w / 2} y={el.y + el.h / 2 + 4} textAnchor="middle" fill="#86efac" fontSize="10">{el.label}</text>}
+          {[...Array(3)].map((_, i) => (
+            <g key={i} transform={`translate(${el.x + (i*20) % (el.w||40)}, ${el.y + (i*15) % (el.h||40)})`}>
+               <path d="M 0 10 L 5 0 L 10 10 Z" fill="#166534" />
+               <rect x="4" y="10" width="2" height="3" fill="#422006" />
+            </g>
+          ))}
+          {el.label && <text x={el.x + (el.w||0) / 2} y={el.y + (el.h||0) + 12} textAnchor="middle" fill="#86efac" fontSize="9" fontWeight="bold">{el.label}</text>}
         </g>
       );
-    case 'collapsed':
+    case 'bridge':
       return (
-        <g key={idx}>
-          <rect x={el.x} y={el.y} width="60" height="50" rx="3" fill="#78716c" stroke="#ef4444" strokeWidth="2" />
-          <line x1={el.x} y1={el.y} x2={el.x + 60} y2={el.y + 50} stroke="#ef4444" strokeWidth="2" />
-          <line x1={el.x + 60} y1={el.y} x2={el.x} y2={el.y + 50} stroke="#ef4444" strokeWidth="2" />
-          {el.label && <text x={el.x + 30} y={el.y - 6} textAnchor="middle" fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
+        <g key={idx} transform={`translate(${el.x1},${el.y1})`}>
+          <text fontSize="50" textAnchor="middle">🌉</text>
+          {el.label && <text y="-35" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="13" fontWeight="bold">{el.label}</text>}
         </g>
       );
-    case 'hazard':
+    case 'checkpoint':
       return (
-        <g key={idx}>
-          <circle cx={el.x} cy={el.y} r="30" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" strokeWidth="2" strokeDasharray="6,3" />
-          <text x={el.x} y={el.y + 5} textAnchor="middle" fontSize="22">{el.icon}</text>
-          {el.label && <text x={el.x} y={el.y + 30} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>}
-          {el.sublabel && <text x={el.x} y={el.y + 42} textAnchor="middle" fill="#f59e0b" fontSize="8">{el.sublabel}</text>}
+        <g key={idx} transform={`translate(${el.x-20},${el.y-10})`}>
+          <rect width="40" height="20" fill="#f59e0b" rx="2" />
+          <rect x="5" y="8" width="30" height="4" fill="#111" />
+          <text x="20" y="-5" textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>
         </g>
       );
-    case 'road_blocked':
+    case 'danger_zone':
       return (
         <g key={idx}>
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={20} />
-          <line x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="rgba(239,68,68,0.3)" strokeWidth={20} />
-          {el.label && <text x={(el.x1 + el.x2) / 2 + 15} y={(el.y1 + el.y2) / 2} fill="#fca5a5" fontSize="9" fontWeight="bold">{el.label}</text>}
+          <ellipse cx={el.cx} cy={el.cy} rx={el.rx} ry={el.ry} fill="url(#dangerGradient)" opacity="0.6" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,2" />
+          <text x={el.cx} y={el.cy + 4} textAnchor="middle" fontSize="11" fill="#fff" fontWeight="bold" filter="drop-shadow(1px 1px 1px red)">{el.label}</text>
+        </g>
+      );
+    case 'curved_road':
+      return <path key={idx} d={el.path} stroke={el.color || "#8b7355"} strokeWidth={el.width || 12} fill="none" strokeLinecap="round" />;
+    case 'tree_pine':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <path d="M 0 0 L 10 -20 L 20 0 Z" fill="#14532d" />
+          <path d="M 2 -10 L 10 -30 L 18 -10 Z" fill="#166534" />
+          <rect x="8" y="0" width="4" height="6" fill="#422006" />
+        </g>
+      );
+    case 'tree_palm':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <path d="M 0 0 Q 5 -20 10 0 T 20 0" fill="none" stroke="#422006" strokeWidth="3" />
+          <path d="M 5 -15 L -10 -25 M 5 -15 L 20 -25 M 5 -15 L 5 -35" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
+        </g>
+      );
+    case 'boat':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <path d="M 0 0 L 30 0 L 40 -10 L -10 -10 Z" fill="#ef4444" stroke="#991b1b" />
+          <rect x="5" y="-18" width="15" height="8" fill="white" />
+          {el.label && <text y="-25" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
+    case 'label':
+      return (
+        <g key={idx}>
+          <rect x={el.x - (el.text.length * 4)} y={el.y - 12} width={el.text.length * 8} height={16} fill="rgba(0,0,0,0.4)" rx="2" />
+          <text x={el.x} y={el.y} textAnchor="middle" fill={el.color || '#ccc'} fontSize={el.size || 12} fontWeight="800" letterSpacing="0.05em">
+            {el.text}
+          </text>
+        </g>
+      );
+    case 'start_point':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <circle r="15" fill="rgba(34,197,94,0.3)" stroke="#22c55e" strokeWidth="2" />
+          <path d="M -5 -2 L 5 -2 L 0 8 Z" fill="#22c55e" />
+          <rect x="-40" y="-35" width="80" height="14" fill="rgba(22,101,52,0.8)" rx="2" />
+          <text y="-25" textAnchor="middle" fill="#86efac" fontSize="9" fontWeight="bold">START POINT</text>
+          <rect x="-40" y="20" width="80" height="14" fill="rgba(0,0,0,0.6)" rx="2" />
+          <text y="30" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">{el.label}</text>
+        </g>
+      );
+    case 'end_point':
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <rect x="-12" y="-12" width="24" height="24" fill="rgba(59,130,246,0.3)" stroke="#3b82f6" strokeWidth="2" />
+          <rect x="-40" y="-35" width="80" height="14" fill="rgba(30,58,138,0.8)" rx="2" />
+          <text y="-25" textAnchor="middle" fill="#93c5fd" fontSize="9" fontWeight="bold">DESTINATION</text>
+          <rect x="-40" y="20" width="80" height="14" fill="rgba(0,0,0,0.6)" rx="2" />
+          <text y="30" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">{el.label}</text>
+          <path d="M -5 -5 L 5 5 M 5 -5 L -5 5" stroke="#3b82f6" strokeWidth="2" />
         </g>
       );
     default:
@@ -171,7 +189,8 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
   const [lastPanPos, setLastPanPos] = useState({ x: 0, y: 0 });
 
   // Get the scenario template
-  const template = SCENARIO_TEMPLATES[scenarioId] || SCENARIO_TEMPLATES['village_fire'];
+  const template = SCENARIO_TEMPLATES[scenarioId] || SCENARIO_TEMPLATES['mohi_firing_range'];
+  const { elements = [], terrain = '#7db952', bgImage } = template;
 
   // Expose map state to parent via ref
   useImperativeHandle(ref, () => ({
@@ -361,13 +380,40 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
           style={{ display: 'block', touchAction: 'none' }}
         >
           {/* Background terrain */}
-          <rect x="-1000" y="-1000" width="3000" height="3000" fill={template.terrain || '#3d6b47'} />
-
-          {/* Render all scenario elements from template data */}
-          {template.elements.map((el, idx) => renderElement(el, idx))}
+          <rect width="800" height="600" fill={terrain || "#eee"} />
+      
+          {bgImage && (
+            <image href={bgImage} x="0" y="0" width="800" height="600" preserveAspectRatio="none" />
+          )}
+          
+          {/* Dynamic Elements */}
+          {elements.map((el, idx) => {
+            // Only render non-infrastructure elements if a background image is provided
+            const isInfra = ['road', 'curved_road', 'river', 'track', 'vegetation', 'tree_pine', 'tree_palm', 'house', 'building', 'bridge', 'zone'].includes(el.type);
+            if (bgImage && isInfra) return null;
+            return renderElement(el, idx);
+          })}
 
           {/* Arrow marker for paths */}
           <defs>
+            <pattern id="terrainPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+               <rect width="100" height="100" fill={terrain || '#3d6b47'} />
+               <circle cx="10" cy="10" r="1" fill="#ffffff" opacity="0.05" />
+               <circle cx="50" cy="60" r="1.5" fill="#ffffff" opacity="0.03" />
+            </pattern>
+            <pattern id="seaPattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+               <rect width="40" height="40" fill="#1e40af" />
+               <path d="M 0 20 Q 10 10 20 20 T 40 20" stroke="#3b82f6" fill="none" opacity="0.3" strokeWidth="2" />
+            </pattern>
+            <linearGradient id="riverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+               <stop offset="0%" stopColor="#1d4ed8" />
+               <stop offset="50%" stopColor="#3b82f6" />
+               <stop offset="100%" stopColor="#1d4ed8" />
+            </linearGradient>
+            <radialGradient id="dangerGradient">
+               <stop offset="0%" stopColor="#ef4444" stopOpacity="0.8" />
+               <stop offset="100%" stopColor="#ef4444" stopOpacity="0.2" />
+            </radialGradient>
             <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
               <polygon points="0 0, 10 3.5, 0 7" fill="#111" />
             </marker>
