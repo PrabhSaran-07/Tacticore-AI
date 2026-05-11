@@ -167,6 +167,11 @@ const SessionSchema = new mongoose.Schema({
     volunteers: { type: Number, default: 0 },
     fireTrucks: { type: Number, default: 0 },
     waterPumps: { type: Number, default: 0 },
+    ambulance: { type: Number, default: 0 },
+    police: { type: Number, default: 0 },
+    citizen: { type: Number, default: 0 },
+    car: { type: Number, default: 0 },
+    bike: { type: Number, default: 0 },
     customItems: [{
       name: String,
       quantity: { type: Number, default: 1 },

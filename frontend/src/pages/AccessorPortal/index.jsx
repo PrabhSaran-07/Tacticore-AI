@@ -307,6 +307,12 @@ export default function AccessorPortal() {
   };
 
   const fetchSubmissions = async (session) => {
+    if (selectedSession?._id === session._id) {
+      setSelectedSession(null);
+      setSubmissions([]);
+      setExpandedSubmission(null);
+      return;
+    }
     setSelectedSession(session);
     setLoadingSubmissions(true);
     setSubmissions([]);
@@ -329,18 +335,167 @@ export default function AccessorPortal() {
     alert(`Session code "${code}" copied to clipboard!`);
   };
 
+  const renderSubmissionsInline = () => {
+    if (loadingSubmissions) {
+      return <p style={{ color: 'var(--gray-400)', textAlign: 'center', padding: '2rem' }}>Loading submissions...</p>;
+    }
+    if (submissions.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--gray-500)', background: 'var(--gray-900)', borderRadius: '0.5rem', marginTop: '1rem' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📭</div>
+          <p>No submissions yet. Share the code with cadets.</p>
+          <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
+            Code: <strong style={{ color: 'var(--primary)', fontFamily: 'monospace', fontSize: '1.1rem' }}>{selectedSession.sessionCode}</strong>
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem', padding: '1rem', background: 'var(--gray-900)', borderRadius: '0.5rem' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gray-200)', marginBottom: '0.5rem' }}>Submissions</h3>
+        {submissions.map((sub, idx) => (
+          <div key={idx} style={{
+            padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem', border: '1px solid var(--gray-700)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  width: '2rem', height: '2rem', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), #2563eb)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'white', fontWeight: 'bold', fontSize: '0.75rem'
+                }}>{(sub.cadetName || 'C')[0].toUpperCase()}</div>
+                <span style={{ color: 'var(--gray-100)', fontWeight: '600' }}>{sub.cadetName || 'Cadet'}</span>
+                {sub.olqAnalysis && (
+                  <span style={{ 
+                    background: sub.olqAnalysis.overallScore >= 8 ? 'rgba(16,185,129,0.2)' : sub.olqAnalysis.overallScore >= 5 ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)', 
+                    color: sub.olqAnalysis.overallScore >= 8 ? 'var(--success)' : sub.olqAnalysis.overallScore >= 5 ? 'var(--primary)' : 'var(--warning)', 
+                    padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold' 
+                  }}>
+                    OLQ: {sub.olqAnalysis.overallScore}/10
+                  </span>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ color: 'var(--gray-500)', fontSize: '0.75rem' }}>
+                  {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'Just now'}
+                </span>
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={() => setExpandedSubmission({ sub, session: selectedSession })}
+                >
+                  🗺 View Map & Analysis
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
+              <div style={{ padding: '0.4rem 0.8rem', background: 'var(--gray-700)', borderRadius: '0.3rem' }}>
+                📍 <strong>{sub.mapState?.markers?.length || 0}</strong> Resources Placed
+              </div>
+              <div style={{ padding: '0.4rem 0.8rem', background: 'var(--gray-700)', borderRadius: '0.3rem' }}>
+                🛤 <strong>{sub.mapState?.paths?.length || 0}</strong> Routes Drawn
+              </div>
+            </div>
+
+            {sub.mapState?.markers?.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                {(() => {
+                  const counts = {};
+                  sub.mapState.markers.forEach(m => {
+                    const label = m.label || m.type || 'Resource';
+                    counts[label] = (counts[label] || 0) + 1;
+                  });
+                  return Object.entries(counts).map(([label, count]) => (
+                    <span key={label} style={{
+                      padding: '0.2rem 0.6rem', background: 'rgba(59,130,246,0.15)',
+                      borderRadius: '1rem', fontSize: '0.75rem', color: 'var(--primary)'
+                    }}>{label} × {count}</span>
+                  ));
+                })()}
+              </div>
+            )}
+
+            {sub.note && (
+              <div style={{
+                padding: '0.75rem', background: 'rgba(59,130,246,0.08)',
+                borderLeft: '3px solid var(--primary)', borderRadius: '0 0.3rem 0.3rem 0',
+                fontSize: '0.85rem', color: 'var(--gray-300)', fontStyle: 'italic'
+              }}>💬 "{sub.note}"</div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSessionCard = (session) => (
+    <div key={session._id} style={{
+      padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem',
+      border: selectedSession?._id === session._id ? '2px solid var(--primary)' : '1px solid var(--gray-700)',
+      display: 'flex', flexDirection: 'column'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{
+            background: 'var(--primary)', color: 'white', padding: '0.3rem 0.8rem',
+            borderRadius: '0.3rem', fontWeight: 'bold', fontSize: '1rem', letterSpacing: '0.1em', fontFamily: 'monospace'
+          }}>{session.sessionCode}</span>
+          <button onClick={() => copyCode(session.sessionCode)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }} title="Copy code">📋</button>
+          <span style={{
+            background: session.phase === 'waiting' ? 'rgba(245,158,11,0.15)' : session.phase === 'completed' ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)',
+            color: session.phase === 'waiting' ? 'var(--warning)' : session.phase === 'completed' ? 'var(--success)' : 'var(--primary)',
+            padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase'
+          }}>{session.phase || 'waiting'}</span>
+          <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>👥 {session.participants?.length || 0}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-sm btn-success" onClick={() => navigate(`/simulation?sessionId=${session._id}`)}>▶ Enter Session</button>
+          <button className="btn btn-sm btn-primary" onClick={() => fetchSubmissions(session)}>
+            {selectedSession?._id === session._id ? '📤 Hide Submissions' : '📥 Submissions'}
+          </button>
+          <button className="btn btn-sm btn-secondary" onClick={() => handleDuplicateSession(session._id)} title="Duplicate session">📋 Duplicate</button>
+          <button className="btn btn-sm btn-danger" onClick={() => handleDeleteSession(session._id)}>🗑</button>
+        </div>
+      </div>
+      {session.title && (
+        <p style={{ color: 'var(--gray-200)', fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.25rem' }}>{session.title}</p>
+      )}
+      <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem' }}>
+        {session.problemDescription?.substring(0, 80)}{session.problemDescription?.length > 80 ? '...' : ''}
+      </p>
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--gray-500)', alignItems: 'center' }}>
+        <span>⏱ {session.timeLimit} min</span>
+        <span>🚒 {session.assignedResources?.fireTrucks || 0}</span>
+        <span>👥 {session.assignedResources?.volunteers || 0}</span>
+        <span>💧 {session.assignedResources?.waterPumps || 0}</span>
+        {session.difficulty && (
+          <span style={{
+            padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase',
+            background: session.difficulty === 'hard' ? 'rgba(239,68,68,0.15)' : session.difficulty === 'medium' ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
+            color: session.difficulty === 'hard' ? 'var(--danger)' : session.difficulty === 'medium' ? 'var(--warning)' : 'var(--success)'
+          }}>{session.difficulty}</span>
+        )}
+      </div>
+
+      {selectedSession?._id === session._id && renderSubmissionsInline()}
+    </div>
+  );
+
+  const activeSessions = sessions.filter(s => s.phase !== 'completed');
+  const completedSessions = sessions.filter(s => s.phase === 'completed');
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>Accessor Portal</h1>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>Manage Sessions</h1>
           <p style={{ color: 'var(--gray-400)' }}>Create exercises, share codes, and review cadet submissions</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowCreateWizard(true)}>+ New Exercise Session</button>
       </div>
 
-      {/* Create Session Wizard */}
       {showCreateWizard && (
         <CreateSessionWizard
           onCreated={handleSessionCreated}
@@ -348,239 +503,117 @@ export default function AccessorPortal() {
         />
       )}
 
-      {/* Sessions List */}
+      {/* Active Sessions */}
       <div className="card">
         <h2 className="card-title" style={{ marginBottom: '1rem' }}>Active Sessions</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {sessions.length === 0 ? (
-            <p style={{ color: 'var(--gray-500)', fontStyle: 'italic' }}>No active sessions. Create one to begin.</p>
+          {activeSessions.length === 0 ? (
+            <p style={{ color: 'var(--gray-500)', fontStyle: 'italic' }}>No active sessions.</p>
           ) : (
-            sessions.map(session => (
-              <div key={session._id} style={{
-                padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem',
-                border: selectedSession?._id === session._id ? '2px solid var(--primary)' : '1px solid var(--gray-700)',
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{
-                      background: 'var(--primary)', color: 'white', padding: '0.3rem 0.8rem',
-                      borderRadius: '0.3rem', fontWeight: 'bold', fontSize: '1rem', letterSpacing: '0.1em', fontFamily: 'monospace'
-                    }}>{session.sessionCode}</span>
-                    <button onClick={() => copyCode(session.sessionCode)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }} title="Copy code">📋</button>
-                    <span style={{
-                      background: session.phase === 'waiting' ? 'rgba(245,158,11,0.15)' : session.phase === 'completed' ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)',
-                      color: session.phase === 'waiting' ? 'var(--warning)' : session.phase === 'completed' ? 'var(--success)' : 'var(--primary)',
-                      padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase'
-                    }}>{session.phase || 'waiting'}</span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)' }}>👥 {session.participants?.length || 0}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-sm btn-success" onClick={() => navigate(`/simulation?sessionId=${session._id}`)}>▶ Enter Session</button>
-                    <button className="btn btn-sm btn-primary" onClick={() => fetchSubmissions(session)}>📥 Submissions</button>
-                    <button className="btn btn-sm btn-secondary" onClick={() => handleDuplicateSession(session._id)} title="Duplicate session">📋 Duplicate</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDeleteSession(session._id)}>🗑</button>
-                  </div>
-                </div>
-                {session.title && (
-                  <p style={{ color: 'var(--gray-200)', fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.25rem' }}>{session.title}</p>
-                )}
-                <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem' }}>
-                  {session.problemDescription?.substring(0, 80)}{session.problemDescription?.length > 80 ? '...' : ''}
-                </p>
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--gray-500)', alignItems: 'center' }}>
-                  <span>⏱ {session.timeLimit} min</span>
-                  <span>🚒 {session.assignedResources?.fireTrucks || 0}</span>
-                  <span>👥 {session.assignedResources?.volunteers || 0}</span>
-                  <span>💧 {session.assignedResources?.waterPumps || 0}</span>
-                  {session.difficulty && (
-                    <span style={{
-                      padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.65rem', fontWeight: 'bold', textTransform: 'uppercase',
-                      background: session.difficulty === 'hard' ? 'rgba(239,68,68,0.15)' : session.difficulty === 'medium' ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
-                      color: session.difficulty === 'hard' ? 'var(--danger)' : session.difficulty === 'medium' ? 'var(--warning)' : 'var(--success)'
-                    }}>{session.difficulty}</span>
-                  )}
-                </div>
-              </div>
-            ))
+            activeSessions.map(renderSessionCard)
           )}
         </div>
       </div>
 
-      {/* Submissions Viewer */}
-      {selectedSession && (
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 className="card-title">
-              📥 Submissions — <span style={{ color: 'var(--primary)', fontFamily: 'monospace' }}>{selectedSession.sessionCode}</span>
-            </h2>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button className="btn btn-sm btn-secondary" onClick={() => fetchSubmissions(selectedSession)}>🔄 Refresh</button>
-              <button className="btn btn-sm btn-secondary" onClick={() => { setSelectedSession(null); setSubmissions([]); }}>✕ Close</button>
-            </div>
-          </div>
-
-          {loadingSubmissions ? (
-            <p style={{ color: 'var(--gray-400)', textAlign: 'center', padding: '2rem' }}>Loading submissions...</p>
-          ) : submissions.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--gray-500)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>📭</div>
-              <p>No submissions yet. Share the code with cadets.</p>
-              <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                Code: <strong style={{ color: 'var(--primary)', fontFamily: 'monospace', fontSize: '1.1rem' }}>{selectedSession.sessionCode}</strong>
-              </p>
-            </div>
+      {/* Completed Sessions */}
+      <div className="card">
+        <h2 className="card-title" style={{ marginBottom: '1rem' }}>Completed Sessions</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {completedSessions.length === 0 ? (
+            <p style={{ color: 'var(--gray-500)', fontStyle: 'italic' }}>No completed sessions.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {submissions.map((sub, idx) => (
-                <div key={idx} style={{
-                  padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem', border: '1px solid var(--gray-700)'
-                }}>
-                  {/* Submission header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div style={{
-                        width: '2rem', height: '2rem', borderRadius: '50%',
-                        background: 'linear-gradient(135deg, var(--primary), #2563eb)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'white', fontWeight: 'bold', fontSize: '0.75rem'
-                      }}>{(sub.cadetName || 'C')[0].toUpperCase()}</div>
-                      <span style={{ color: 'var(--gray-100)', fontWeight: '600' }}>{sub.cadetName || 'Cadet'}</span>
-                      {sub.olqAnalysis && (
-                        <span style={{ 
-                          background: sub.olqAnalysis.overallScore >= 8 ? 'rgba(16,185,129,0.2)' : sub.olqAnalysis.overallScore >= 5 ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)', 
-                          color: sub.olqAnalysis.overallScore >= 8 ? 'var(--success)' : sub.olqAnalysis.overallScore >= 5 ? 'var(--primary)' : 'var(--warning)', 
-                          padding: '0.2rem 0.6rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: 'bold' 
-                        }}>
-                          OLQ: {sub.olqAnalysis.overallScore}/10
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ color: 'var(--gray-500)', fontSize: '0.75rem' }}>
-                        {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'Just now'}
-                      </span>
-                      <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => setExpandedSubmission(expandedSubmission === idx ? null : idx)}
-                      >
-                        {expandedSubmission === idx ? '🗺 Hide Map' : '🗺 View Map'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
-                    <div style={{ padding: '0.4rem 0.8rem', background: 'var(--gray-700)', borderRadius: '0.3rem' }}>
-                      📍 <strong>{sub.mapState?.markers?.length || 0}</strong> Resources Placed
-                    </div>
-                    <div style={{ padding: '0.4rem 0.8rem', background: 'var(--gray-700)', borderRadius: '0.3rem' }}>
-                      🛤 <strong>{sub.mapState?.paths?.length || 0}</strong> Routes Drawn
-                    </div>
-                  </div>
-
-                  {/* Resource breakdown badges */}
-                  {sub.mapState?.markers?.length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                      {(() => {
-                        const counts = {};
-                        sub.mapState.markers.forEach(m => {
-                          const label = m.label || m.type || 'Resource';
-                          counts[label] = (counts[label] || 0) + 1;
-                        });
-                        return Object.entries(counts).map(([label, count]) => (
-                          <span key={label} style={{
-                            padding: '0.2rem 0.6rem', background: 'rgba(59,130,246,0.15)',
-                            borderRadius: '1rem', fontSize: '0.75rem', color: 'var(--primary)'
-                          }}>{label} × {count}</span>
-                        ));
-                      })()}
-                    </div>
-                  )}
-
-                  {/* Cadet's note */}
-                  {sub.note && (
-                    <div style={{
-                      padding: '0.75rem', background: 'rgba(59,130,246,0.08)',
-                      borderLeft: '3px solid var(--primary)', borderRadius: '0 0.3rem 0.3rem 0',
-                      fontSize: '0.85rem', color: 'var(--gray-300)', fontStyle: 'italic', marginBottom: '0.75rem'
-                    }}>💬 "{sub.note}"</div>
-                  )}
-
-                  {/* ===== EXPANDED MAP VIEW ===== */}
-                  {expandedSubmission === idx && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-                        🗺 Cadet's resource placement and routes on the scenario map:
-                      </p>
-                      <SubmissionMap
-                        markers={sub.mapState?.markers || []}
-                        paths={sub.mapState?.paths || []}
-                        scenarioId={selectedSession?.scenarioId}
-                      />
-                      {/* Detailed OLQ Report */}
-                      {sub.olqAnalysis && (
-                        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                          <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '0.5rem', borderBottom: '1px solid var(--gray-700)', paddingBottom: '0.5rem' }}>
-                            AI Performance Analysis
-                          </h3>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                            <div className="card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.05))', border: '1px solid rgba(59,130,246,0.3)', padding: '1rem' }}>
-                              <p style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Overall Score</p>
-                              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>
-                                {sub.olqAnalysis.overallScore} <span style={{ fontSize: '1rem', color: 'var(--gray-500)' }}>/ 10</span>
-                              </div>
-                            </div>
-                            
-                            <div className="card" style={{ padding: '1rem' }}>
-                              <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Top Strengths</p>
-                              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', margin: 0, padding: 0, listStyle: 'none', fontSize: '0.8rem' }}>
-                                {sub.olqAnalysis.strengths?.map((s, i) => (
-                                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
-                                    <span>✓ {s.name}</span>
-                                    <strong>{s.score}</strong>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            <div className="card" style={{ padding: '1rem' }}>
-                              <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Areas for Growth</p>
-                              <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', margin: 0, padding: 0, listStyle: 'none', fontSize: '0.8rem' }}>
-                                {sub.olqAnalysis.improvements?.map((s, i) => (
-                                  <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--warning)' }}>
-                                    <span>⚠ {s.name}</span>
-                                    <strong>{s.score}</strong>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-
-                          <div className="card" style={{ padding: '1rem' }}>
-                            <h4 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '1rem' }}>Detailed OLQ Rubric Breakdown</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.75rem' }}>
-                              {sub.olqAnalysis.details?.map((detail, i) => (
-                                <div key={i} style={{ padding: '0.75rem', background: 'var(--gray-800)', borderRadius: '0.5rem', borderLeft: `3px solid ${detail.score >= 8 ? 'var(--success)' : detail.score >= 5 ? 'var(--primary)' : 'var(--danger)'}` }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                    <span style={{ fontWeight: 'bold', color: 'var(--gray-200)', fontSize: '0.85rem' }}>{detail.name}</span>
-                                    <span style={{ fontSize: '1rem', fontWeight: 'bold', color: detail.score >= 8 ? 'var(--success)' : detail.score >= 5 ? 'var(--primary)' : 'var(--danger)' }}>
-                                      {detail.score}
-                                    </span>
-                                  </div>
-                                  <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', lineHeight: '1.4' }}>{detail.evidence}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+            completedSessions.map(renderSessionCard)
           )}
+        </div>
+      </div>
+
+      {/* ===== POPUP FOR EXPANDED SUBMISSION ===== */}
+      {expandedSubmission && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000,
+          background: 'rgba(0,0,0,0.95)', display: 'flex', flexDirection: 'column',
+          padding: '2rem', animation: 'fadeIn 0.2s ease-out'
+        }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div>
+                <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>{expandedSubmission.sub.cadetName}'s Submission</h2>
+                <p style={{ color: 'var(--gray-400)', margin: 0, fontSize: '0.9rem' }}>Session: {expandedSubmission.session.sessionCode}</p>
+              </div>
+              <button className="btn btn-secondary" onClick={() => setExpandedSubmission(null)}>✕ Close</button>
+           </div>
+           
+           <div style={{ display: 'flex', gap: '1.5rem', flex: 1, overflow: 'hidden' }}>
+              <div style={{ flex: '0 0 75%', background: 'var(--gray-800)', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', border: '1px solid var(--gray-700)' }}>
+                 <div style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
+                   <SubmissionMap
+                     markers={expandedSubmission.sub.mapState?.markers || []}
+                     paths={expandedSubmission.sub.mapState?.paths || []}
+                     scenarioId={expandedSubmission.session.scenarioId}
+                   />
+                 </div>
+              </div>
+              
+              <div style={{ flex: '0 0 calc(25% - 1.5rem)', background: 'var(--gray-800)', borderRadius: '0.5rem', overflowY: 'auto', padding: '1.5rem', border: '1px solid var(--gray-700)' }}>
+                 {expandedSubmission.sub.olqAnalysis ? (
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '0.5rem', borderBottom: '1px solid var(--gray-700)', paddingBottom: '0.5rem' }}>
+                        AI Analysis
+                      </h3>
+                      <div className="card" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(37,99,235,0.05))', border: '1px solid rgba(59,130,246,0.3)', padding: '1rem' }}>
+                        <p style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase' }}>Overall Score</p>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--gray-100)' }}>
+                          {expandedSubmission.sub.olqAnalysis.overallScore} <span style={{ fontSize: '1.2rem', color: 'var(--gray-500)' }}>/ 10</span>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <p style={{ color: 'var(--gray-400)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 'bold' }}>Top Strengths</p>
+                        <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: 0, padding: 0, listStyle: 'none', fontSize: '0.85rem' }}>
+                          {expandedSubmission.sub.olqAnalysis.strengths?.map((s, i) => (
+                            <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', background: 'rgba(16,185,129,0.1)', padding: '0.5rem', borderRadius: '0.3rem' }}>
+                              <span>✓ {s.name}</span>
+                              <strong>{s.score}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <p style={{ color: 'var(--gray-400)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', fontWeight: 'bold' }}>Areas for Growth</p>
+                        <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: 0, padding: 0, listStyle: 'none', fontSize: '0.85rem' }}>
+                          {expandedSubmission.sub.olqAnalysis.improvements?.map((s, i) => (
+                            <li key={i} style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--warning)', background: 'rgba(245,158,11,0.1)', padding: '0.5rem', borderRadius: '0.3rem' }}>
+                              <span>⚠ {s.name}</span>
+                              <strong>{s.score}</strong>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div style={{ marginTop: '1rem' }}>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--gray-100)', marginBottom: '0.75rem' }}>Detailed Breakdown</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          {expandedSubmission.sub.olqAnalysis.details?.map((detail, i) => (
+                            <div key={i} style={{ padding: '0.75rem', background: 'var(--gray-900)', borderRadius: '0.5rem', borderLeft: `3px solid ${detail.score >= 8 ? 'var(--success)' : detail.score >= 5 ? 'var(--primary)' : 'var(--danger)'}` }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                <span style={{ fontWeight: 'bold', color: 'var(--gray-200)', fontSize: '0.85rem' }}>{detail.name}</span>
+                                <span style={{ fontSize: '1rem', fontWeight: 'bold', color: detail.score >= 8 ? 'var(--success)' : detail.score >= 5 ? 'var(--primary)' : 'var(--danger)' }}>
+                                  {detail.score}
+                                </span>
+                              </div>
+                              <p style={{ color: 'var(--gray-400)', fontSize: '0.75rem', lineHeight: '1.4', margin: 0 }}>{detail.evidence}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                   </div>
+                 ) : (
+                   <div style={{ color: 'var(--gray-500)', textAlign: 'center', padding: '2rem' }}>
+                     <p>No AI analysis available for this submission.</p>
+                   </div>
+                 )}
+              </div>
+           </div>
         </div>
       )}
     </div>

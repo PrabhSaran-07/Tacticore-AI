@@ -6,6 +6,11 @@ const RESOURCE_ICONS = {
   add_truck: { icon: '🚒', label: 'Fire Truck', color: '#ef4444' },
   add_person: { icon: '👷', label: 'Volunteer', color: '#3b82f6' },
   add_pump: { icon: '💧', label: 'Water Pump', color: '#06b6d4' },
+  add_ambulance: { icon: '🚑', label: 'Ambulance', color: '#f59e0b' },
+  add_police: { icon: '🚓', label: 'Police', color: '#1d4ed8' },
+  add_citizen: { icon: '🚶', label: 'Citizen', color: '#10b981' },
+  add_car: { icon: '🚗', label: 'Car', color: '#8b5cf6' },
+  add_bike: { icon: '🚲', label: 'Bike', color: '#ec4899' },
 };
 
 // ── SVG renderers for each element type ──
@@ -267,6 +272,11 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
         if (activeMode === 'add_truck') limit = assignedResources.fireTrucks || 0;
         else if (activeMode === 'add_person') limit = assignedResources.volunteers || 0;
         else if (activeMode === 'add_pump') limit = assignedResources.waterPumps || 0;
+        else if (activeMode === 'add_ambulance') limit = assignedResources.ambulance || 0;
+        else if (activeMode === 'add_police') limit = assignedResources.police || 0;
+        else if (activeMode === 'add_citizen') limit = assignedResources.citizen || 0;
+        else if (activeMode === 'add_car') limit = assignedResources.car || 0;
+        else if (activeMode === 'add_bike') limit = assignedResources.bike || 0;
 
         if (typeCount >= limit) {
           alert(`Limit reached for ${resourceInfo.label}`);
@@ -483,9 +493,7 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
         }}>
           <span>
             {activeMode === 'view' && '👁 View Mode'}
-            {activeMode === 'add_truck' && '🚒 Click map to place Fire Truck'}
-            {activeMode === 'add_person' && '👷 Click map to place Volunteer'}
-            {activeMode === 'add_pump' && '💧 Click map to place Water Pump'}
+            {RESOURCE_ICONS[activeMode] && `${RESOURCE_ICONS[activeMode].icon} Click map to place ${RESOURCE_ICONS[activeMode].label}`}
             {activeMode === 'draw_path' && `✏ Route — ${drawingPath ? `${drawingPath.points.length} pts` : 'Click to start'}`}
           </span>
           <div style={{ display: 'flex', gap: '0.4rem' }}>

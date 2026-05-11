@@ -10,8 +10,7 @@ export default function Navbar({ onLogout, user }) {
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/simulation', label: 'Planning Room', icon: '📝' },
-    { path: '/accessor', label: 'Instructor Portal', icon: '👨‍✈' },
+    { path: '/accessor', label: 'Session', icon: '👨‍✈' },
   ];
 
   return (

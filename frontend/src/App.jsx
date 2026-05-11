@@ -59,9 +59,21 @@ export default function App() {
     return () => window.removeEventListener('app-logout', onAppLogout);
   }, []);
 
+  // Theme initialization
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#050a13', color: '#6b7280' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--gray-500)' }}>
         Connecting to server...
       </div>
     );
@@ -72,7 +84,7 @@ export default function App() {
 
   return (
     <Router>
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#050a13' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {isAuth && role === 'accessor' && <Navbar onLogout={handleLogout} user={user} />}
         <main style={{ flex: 1, padding: isAuth && role === 'accessor' ? '1rem 1.5rem' : '0', width: '100%', overflow: 'hidden' }}>
           <Routes>
@@ -100,6 +112,19 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        
+        {/* Global Theme Toggle */}
+        <button onClick={toggleTheme} style={{
+          position: 'fixed', bottom: '2rem', right: '2rem', zIndex: 9999,
+          background: 'var(--gray-800)', border: '1px solid var(--gray-600)',
+          borderRadius: '50%', width: '3rem', height: '3rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', fontSize: '1.5rem', transition: 'all 0.2s',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+          color: theme === 'dark' ? 'var(--warning)' : 'var(--primary)'
+        }} title="Toggle Theme">
+          {theme === 'dark' ? '☀' : '🌙'}
+        </button>
       </div>
     </Router>
   );

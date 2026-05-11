@@ -117,10 +117,10 @@ export default function Login({ onAccessorLogin, onCadetJoin }) {
             margin: '0 auto 1rem', boxShadow: '0 0 20px rgba(14, 165, 233, 0.5)',
             fontSize: '2rem', color: 'var(--primary)', fontWeight: '800', fontFamily: 'Rajdhani, sans-serif'
           }}>O</div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'white', marginBottom: '0.3rem', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--gray-100)', marginBottom: '0.3rem', letterSpacing: '-0.02em' }}>
             OpSim GPE
           </h1>
-          <p style={{ color: '#60a5fa', fontSize: '0.85rem', fontWeight: '500' }}>Group Planning Exercise Platform</p>
+          <p style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: '500' }}>Group Planning Exercise Platform</p>
         </div>
 
         {/* Tabs */}

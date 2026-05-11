@@ -37,6 +37,11 @@ const DEFAULT_FORM = {
   volunteers: 4,
   fireTrucks: 1,
   waterPumps: 1,
+  ambulance: 0,
+  police: 0,
+  citizen: 0,
+  car: 0,
+  bike: 0,
   customItems: [],
   terrain: '',
   weather: '',
@@ -87,6 +92,11 @@ export default function CreateSessionWizard({ onCreated, onCancel }) {
       volunteers: t.defaultResources?.volunteers ?? f.volunteers,
       fireTrucks: t.defaultResources?.fireTrucks ?? f.fireTrucks,
       waterPumps: t.defaultResources?.waterPumps ?? f.waterPumps,
+      ambulance: t.defaultResources?.ambulance ?? f.ambulance,
+      police: t.defaultResources?.police ?? f.police,
+      citizen: t.defaultResources?.citizen ?? f.citizen,
+      car: t.defaultResources?.car ?? f.car,
+      bike: t.defaultResources?.bike ?? f.bike,
       customItems: t.defaultResources?.customItems || f.customItems,
       problems: t.problems?.length > 0 ? t.problems : f.problems,
     }));
@@ -137,6 +147,11 @@ export default function CreateSessionWizard({ onCreated, onCancel }) {
             volunteers: form.volunteers,
             fireTrucks: form.fireTrucks,
             waterPumps: form.waterPumps,
+            ambulance: form.ambulance,
+            police: form.police,
+            citizen: form.citizen,
+            car: form.car,
+            bike: form.bike,
             customItems: form.customItems.filter(i => i.name.trim())
           },
           constraints: {
@@ -237,11 +252,16 @@ export default function CreateSessionWizard({ onCreated, onCancel }) {
         return (
           <div style={sectionStyle}>
             <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem' }}>Define the personnel, equipment, and environmental constraints for this exercise.</p>
-            <div style={gridThree}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
               {[
                 { key: 'volunteers', label: '👥 Volunteers', icon: '👥' },
                 { key: 'fireTrucks', label: '🚒 Fire Trucks', icon: '🚒' },
                 { key: 'waterPumps', label: '💧 Water Pumps', icon: '💧' },
+                { key: 'ambulance', label: '🚑 Ambulance', icon: '🚑' },
+                { key: 'police', label: '🚓 Police', icon: '🚓' },
+                { key: 'citizen', label: '🚶 Citizen', icon: '🚶' },
+                { key: 'car', label: '🚗 Car', icon: '🚗' },
+                { key: 'bike', label: '🚲 Bike', icon: '🚲' },
               ].map(r => (
                 <div key={r.key}>
                   <label style={labelStyle}>{r.label}</label>
