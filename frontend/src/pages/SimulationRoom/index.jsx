@@ -549,70 +549,75 @@ export default function SimulationRoom({ user, onLogout }) {
         </div>
 
         {/* Map + Right Sidebar */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '75% 25%', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {/* Map */}
           <div style={{ position: 'relative', overflow: 'hidden' }}>
             <PlanningMap ref={mapRef} roomId={sessionId} activeMode={activeMode} user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} />
           </div>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', borderLeft: '1px solid rgba(14,165,233,0.12)', overflow: 'hidden' }}>
-            {/* Map Actions */}
-            <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Map Actions</p>
-              <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
-                <button onClick={() => setActiveMode('view')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'view' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'view' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>👁 View</button>
-                <button onClick={() => setActiveMode('draw_path')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'draw_path' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'draw_path' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>✏ Mark Route</button>
-              </div>
-            </div>
-            {/* Legend */}
-            {template?.legend && (
+            
+            {/* TOP HALF: Tools & Resources */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {/* Map Actions */}
               <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-                <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Legend</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                  {template.legend.map(({ color, label }, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: 'var(--gray-300)' }}>
-                      <div style={{ width: '0.55rem', height: '0.55rem', background: color, borderRadius: '0.1rem', flexShrink: 0 }} /><span>{label}</span>
-                    </div>
-                  ))}
+                <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Map Actions</p>
+                <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
+                  <button onClick={() => setActiveMode('view')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'view' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'view' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>👁 View</button>
+                  <button onClick={() => setActiveMode('draw_path')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'draw_path' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'draw_path' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>✏ Mark Route</button>
                 </div>
               </div>
-            )}
-            {/* Resources */}
-            <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources (Select to Place)</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                {[
-                  { k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
-                  { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
-                  { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 },
-                  { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
-                  { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
-                  { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
-                  { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
-                  { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
-                  ...(session?.assignedResources?.customItems || []).map(ci => ({
-                    k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
-                  }))
-                ].filter(r => r.mx > 0).map(r => {
-                  const used = currentMarkers.filter(m => m.type === r.k).length;
-                  const rem = Math.max(0, r.mx - used);
-                  const isSelected = activeMode === r.k;
-                  return (
-                    <button key={r.k} onClick={() => setActiveMode(r.k)} style={{ 
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.5rem', 
-                      borderRadius: '0.2rem', cursor: 'pointer', border: 'none', textAlign: 'left',
-                      background: isSelected ? 'rgba(14,165,233,0.2)' : 'var(--gray-800)',
-                      boxShadow: isSelected ? 'inset 0 0 0 1px var(--primary)' : 'inset 0 0 0 1px var(--gray-700)'
-                    }}>
-                      <span style={{ fontSize: '0.72rem', color: isSelected ? 'white' : 'var(--gray-300)' }}>{r.i} {r.l}</span>
-                      <span style={{ fontSize: '0.72rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>{rem}/{r.mx}</span>
-                    </button>
-                  );
-                })}
+              {/* Legend */}
+              {template?.legend && (
+                <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                  <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Legend</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                    {template.legend.map(({ color, label }, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: 'var(--gray-300)' }}>
+                        <div style={{ width: '0.55rem', height: '0.55rem', background: color, borderRadius: '0.1rem', flexShrink: 0 }} /><span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Resources */}
+              <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources (Select to Place)</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  {[
+                    { k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
+                    { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
+                    { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 },
+                    { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
+                    { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
+                    { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
+                    { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
+                    { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
+                    ...(session?.assignedResources?.customItems || []).map(ci => ({
+                      k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
+                    }))
+                  ].filter(r => r.mx > 0).map(r => {
+                    const used = currentMarkers.filter(m => m.type === r.k).length;
+                    const rem = Math.max(0, r.mx - used);
+                    const isSelected = activeMode === r.k;
+                    return (
+                      <button key={r.k} onClick={() => setActiveMode(r.k)} style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.5rem', 
+                        borderRadius: '0.2rem', cursor: 'pointer', border: 'none', textAlign: 'left',
+                        background: isSelected ? 'rgba(14,165,233,0.2)' : 'var(--gray-800)',
+                        boxShadow: isSelected ? 'inset 0 0 0 1px var(--primary)' : 'inset 0 0 0 1px var(--gray-700)'
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: isSelected ? 'white' : 'var(--gray-300)' }}>{r.i} {r.l}</span>
+                        <span style={{ fontSize: '0.72rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>{rem}/{r.mx}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-            {/* Chat */}
-            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
+            {/* BOTTOM HALF: Chat */}
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', borderTop: '2px solid rgba(14,165,233,0.15)' }}>
               <ChatPanel roomId={sessionId} user={user} />
             </div>
           </div>
@@ -669,43 +674,48 @@ export default function SimulationRoom({ user, onLogout }) {
             <button className="btn btn-sm btn-secondary" onClick={() => setShowBriefing(true)} style={{ padding: '0.25rem 0.4rem' }}>📋</button>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '75% 25%', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <div style={{ overflow: 'hidden', position: 'relative', minHeight: 0, borderRight: '1px solid rgba(14,165,233,0.15)' }}>
             <PlanningMap ref={mapRef} roomId={sessionId} activeMode="view" user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} readOnly={true} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', overflow: 'hidden' }}>
-            {/* Resources compact */}
-            <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)', flexShrink: 0 }}>
-              <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Resources Used</p>
-              {[
-                { k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
-                { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
-                { k: 'add_pump', i: '💧', l: 'Pumps', mx: session?.assignedResources?.waterPumps || 0 },
-                { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
-                { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
-                { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
-                { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
-                { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
-                ...(session?.assignedResources?.customItems || []).map(ci => ({
-                  k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
-                }))
-              ].filter(r => r.mx > 0).map(r => {
-                const used = currentMarkers.filter(m => m.type === r.k).length;
-                return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', padding: '0.1rem 0', color: 'var(--gray-300)' }}><span>{r.i} {r.l}</span><span style={{ fontFamily: 'monospace', fontWeight: '700', color: used >= r.mx ? 'var(--danger)' : 'var(--success)' }}>{used}/{r.mx}</span></div>;
-              })}
-            </div>
-            {/* Cadets — show who submitted */}
-            <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)', flexShrink: 0 }}>
-              <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Cadets ({participants.length})</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                {participants.map((p, idx) => {
-                  const hasSubmitted = submittedCadets.has(p._id);
-                  return <span key={idx} style={{ padding: '0.08rem 0.4rem', borderRadius: '1rem', fontSize: '0.6rem', fontWeight: '600', background: hasSubmitted ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.15)', color: hasSubmitted ? 'var(--success)' : 'var(--primary)', textDecoration: hasSubmitted ? 'line-through' : 'none' }}>{hasSubmitted ? '✓ ' : ''}{p.chestNo || p.name}</span>;
+            
+            {/* TOP HALF: Info Panels */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {/* Resources compact */}
+              <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Resources Used</p>
+                {[
+                  { k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
+                  { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
+                  { k: 'add_pump', i: '💧', l: 'Pumps', mx: session?.assignedResources?.waterPumps || 0 },
+                  { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
+                  { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
+                  { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
+                  { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
+                  { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
+                  ...(session?.assignedResources?.customItems || []).map(ci => ({
+                    k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
+                  }))
+                ].filter(r => r.mx > 0).map(r => {
+                  const used = currentMarkers.filter(m => m.type === r.k).length;
+                  return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', padding: '0.1rem 0', color: 'var(--gray-300)' }}><span>{r.i} {r.l}</span><span style={{ fontFamily: 'monospace', fontWeight: '700', color: used >= r.mx ? 'var(--danger)' : 'var(--success)' }}>{used}/{r.mx}</span></div>;
                 })}
               </div>
+              {/* Cadets — show who submitted */}
+              <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Cadets ({participants.length})</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+                  {participants.map((p, idx) => {
+                    const hasSubmitted = submittedCadets.has(p._id);
+                    return <span key={idx} style={{ padding: '0.08rem 0.4rem', borderRadius: '1rem', fontSize: '0.6rem', fontWeight: '600', background: hasSubmitted ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.15)', color: hasSubmitted ? 'var(--success)' : 'var(--primary)', textDecoration: hasSubmitted ? 'line-through' : 'none' }}>{hasSubmitted ? '✓ ' : ''}{p.chestNo || p.name}</span>;
+                  })}
+                </div>
+              </div>
             </div>
-            {/* Chat fills rest */}
-            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
+            {/* BOTTOM HALF: Chat */}
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', borderTop: '2px solid rgba(14,165,233,0.15)' }}>
               <ChatPanel roomId={sessionId} user={user} />
             </div>
           </div>
