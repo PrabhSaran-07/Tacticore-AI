@@ -42,25 +42,25 @@ export default function ChatPanel({ roomId = '', user }) {
   };
 
   return (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ borderBottom: '1px solid var(--gray-800)', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--gray-100)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '0.5rem', background: 'transparent' }}>
+      <div style={{ borderBottom: '1px solid var(--gray-800)', paddingBottom: '0.25rem', marginBottom: '0.5rem' }}>
+        <h3 style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
           💬 Group Discussion
         </h3>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', maxHeight: '200px', display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingRight: '0.25rem' }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingRight: '0.25rem' }}>
         {messages.map(msg => {
           const isMe = msg.userId === user?._id;
           const isSystem = msg.type === 'system';
           const isInstructor = msg.type === 'instructor';
 
           return (
-            <div key={msg.id} style={{ display: 'flex', gap: '0.5rem', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+            <div key={msg.id} style={{ display: 'flex', gap: '0.4rem', flexDirection: isMe ? 'row-reverse' : 'row' }}>
               {/* Avatar */}
               <div style={{
-                width: '1.75rem', height: '1.75rem', borderRadius: '50%', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem',
+                width: '1.5rem', height: '1.5rem', borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem',
                 background: isSystem ? 'var(--gray-700)' : isInstructor ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, var(--primary), #1d4ed8)',
                 color: 'white', fontWeight: 'bold'
               }}>
@@ -68,17 +68,17 @@ export default function ChatPanel({ roomId = '', user }) {
               </div>
               {/* Message */}
               <div style={{ flex: 1, textAlign: isMe ? 'right' : 'left' }}>
-                <p style={{ fontSize: '0.65rem', color: 'var(--gray-500)', marginBottom: '0.15rem' }}>
-                  {msg.sender} · {msg.timestamp}
-                </p>
                 <div style={{
-                  display: 'inline-block', padding: '0.4rem 0.65rem', borderRadius: '0.4rem', maxWidth: '85%',
+                  display: 'inline-block', padding: '0.3rem 0.5rem', borderRadius: '0.3rem', maxWidth: '90%',
                   background: isSystem ? 'var(--gray-800)' : isInstructor ? 'rgba(245,158,11,0.15)' : isMe ? 'var(--primary)' : 'var(--gray-800)',
                   color: isInstructor ? 'var(--warning)' : 'white', textAlign: 'left',
                   border: isInstructor ? '1px solid rgba(245,158,11,0.3)' : 'none'
                 }}>
-                  <p style={{ fontSize: '0.825rem' }}>{msg.message}</p>
+                  <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4 }}>{msg.message}</p>
                 </div>
+                <p style={{ fontSize: '0.55rem', color: 'var(--gray-600)', marginTop: '0.15rem' }}>
+                  {msg.sender} · {msg.timestamp}
+                </p>
               </div>
             </div>
           );
@@ -86,7 +86,7 @@ export default function ChatPanel({ roomId = '', user }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
         <input
           type="text"
           placeholder="Type your message..."
@@ -94,9 +94,9 @@ export default function ChatPanel({ roomId = '', user }) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           className="input"
-          style={{ flex: 1 }}
+          style={{ flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.8rem' }}
         />
-        <button onClick={handleSend} className="btn btn-primary btn-sm">Send</button>
+        <button onClick={handleSend} className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Send</button>
       </div>
     </div>
   );
