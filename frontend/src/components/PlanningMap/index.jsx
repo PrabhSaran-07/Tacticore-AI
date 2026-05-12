@@ -264,7 +264,12 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
 
     if (activeMode === 'finish_path' && drawingPath) return;
 
-    const resourceInfo = RESOURCE_ICONS[activeMode];
+    let resourceInfo = RESOURCE_ICONS[activeMode];
+    if (!resourceInfo && activeMode.startsWith('add_custom_')) {
+      const customName = activeMode.replace('add_custom_', '');
+      resourceInfo = { icon: '📦', label: customName, color: '#f59e0b' };
+    }
+
     if (resourceInfo) {
       if (assignedResources) {
         const typeCount = markers.filter(m => m.type === activeMode).length;
@@ -277,6 +282,11 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
         else if (activeMode === 'add_citizen') limit = assignedResources.citizen || 0;
         else if (activeMode === 'add_car') limit = assignedResources.car || 0;
         else if (activeMode === 'add_bike') limit = assignedResources.bike || 0;
+        else if (activeMode.startsWith('add_custom_')) {
+          const customName = activeMode.replace('add_custom_', '');
+          const customItem = assignedResources.customItems?.find(c => c.name === customName);
+          limit = customItem ? customItem.quantity : 0;
+        }
 
         if (typeCount >= limit) {
           alert(`Limit reached for ${resourceInfo.label}`);

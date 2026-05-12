@@ -251,6 +251,7 @@ export default function AccessorPortal() {
   const [aiReports, setAiReports] = useState([]);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [showAIReportModal, setShowAIReportModal] = useState(false);
+  const [showProblemModal, setShowProblemModal] = useState(false);
 
   // Load existing sessions on mount
   useEffect(() => {
@@ -585,7 +586,10 @@ export default function AccessorPortal() {
                 <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>{expandedSubmission.sub.cadetName}'s Submission</h2>
                 <p style={{ color: 'var(--gray-400)', margin: 0, fontSize: '0.9rem' }}>Session: {expandedSubmission.session.sessionCode}</p>
               </div>
-              <button className="btn btn-secondary" onClick={() => setExpandedSubmission(null)}>✕ Close</button>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button className="btn btn-primary" onClick={() => setShowProblemModal(true)}>📋 View Problem Statement</button>
+                <button className="btn btn-secondary" onClick={() => setExpandedSubmission(null)}>✕ Close</button>
+              </div>
            </div>
            
            <div style={{ display: 'flex', gap: '1.5rem', flex: 1, overflow: 'hidden' }}>
@@ -662,6 +666,36 @@ export default function AccessorPortal() {
            </div>
         </div>
       )}
+
+      {/* ===== POPUP FOR PROBLEM STATEMENT ===== */}
+      {showProblemModal && expandedSubmission && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10002,
+          background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div className="card" style={{ maxWidth: '650px', width: '100%', boxShadow: '0 0 40px rgba(59,130,246,0.3)' }}>
+            <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--primary)', fontSize: '1.75rem' }}>📋 Problem Statement</h2>
+            <div style={{ color: 'var(--gray-300)', lineHeight: '1.6', fontSize: '0.95rem' }}>
+              <div style={{ marginBottom: '1.5rem', background: 'var(--gray-800)', padding: '1rem', borderRadius: '0.5rem' }}>
+                <strong>The Situation:</strong>
+                <p style={{ marginTop: '0.5rem' }}>{expandedSubmission.session.problemDescription}</p>
+              </div>
+              {expandedSubmission.session.problems?.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <strong>Specific Problems:</strong>
+                  <ul style={{ marginTop: '0.5rem', paddingLeft: '1.2rem' }}>
+                    {expandedSubmission.session.problems.map((p, i) => (
+                      <li key={i}><span style={{ color: p.priority === 'critical' ? '#ef4444' : '#f59e0b' }}>●</span> {p.description}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            <button className="btn btn-secondary" style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', fontSize: '1.1rem' }} onClick={() => setShowProblemModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
       {/* ===== POPUP FOR ADVANCED AI REPORT ===== */}
       {showAIReportModal && (
         <div style={{
