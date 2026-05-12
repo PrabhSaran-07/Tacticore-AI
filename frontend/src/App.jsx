@@ -84,9 +84,9 @@ export default function App() {
 
   return (
     <Router>
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
         {isAuth && role === 'accessor' && <Navbar onLogout={handleLogout} user={user} />}
-        <main style={{ flex: 1, padding: isAuth && role === 'accessor' ? '1rem 1.5rem' : '0', width: '100%', overflow: 'hidden' }}>
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: isAuth && role === 'accessor' ? '1rem 1.5rem' : '0', width: '100%', overflow: 'auto', minHeight: 0 }}>
           <Routes>
             {/* Login — shows accessor login + cadet join */}
             <Route

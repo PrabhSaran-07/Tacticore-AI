@@ -429,7 +429,7 @@ export default function SimulationRoom({ user, onLogout }) {
   const template = session?.scenarioId ? SCENARIO_TEMPLATES[session.scenarioId] : null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}>
 
       {/* Briefing Modal */}
       {showBriefing && (
@@ -583,18 +583,18 @@ export default function SimulationRoom({ user, onLogout }) {
               {/* Resources */}
               <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
                 <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources (Select to Place)</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.2rem' }}>
                   {[
-                    { k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
+                    { k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
                     { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
-                    { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 },
+                    { k: 'add_pump', i: '💧', l: 'Pumps', mx: session?.assignedResources?.waterPumps || 0 },
                     { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
                     { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
                     { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
                     { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
                     { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
                     ...(session?.assignedResources?.customItems || []).map(ci => ({
-                      k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
+                      k: `add_custom_${ci.name}`, i: '📦', l: ci.name.substring(0,8), mx: ci.quantity
                     }))
                   ].filter(r => r.mx > 0).map(r => {
                     const used = currentMarkers.filter(m => m.type === r.k).length;
@@ -602,13 +602,13 @@ export default function SimulationRoom({ user, onLogout }) {
                     const isSelected = activeMode === r.k;
                     return (
                       <button key={r.k} onClick={() => setActiveMode(r.k)} style={{ 
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.5rem', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.25rem 0.35rem', 
                         borderRadius: '0.2rem', cursor: 'pointer', border: 'none', textAlign: 'left',
                         background: isSelected ? 'rgba(14,165,233,0.2)' : 'var(--gray-800)',
                         boxShadow: isSelected ? 'inset 0 0 0 1px var(--primary)' : 'inset 0 0 0 1px var(--gray-700)'
                       }}>
-                        <span style={{ fontSize: '0.72rem', color: isSelected ? 'white' : 'var(--gray-300)' }}>{r.i} {r.l}</span>
-                        <span style={{ fontSize: '0.72rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>{rem}/{r.mx}</span>
+                        <span style={{ fontSize: '0.65rem', color: isSelected ? 'white' : 'var(--gray-300)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.i} {r.l}</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace', marginLeft: '0.2rem' }}>{rem}/{r.mx}</span>
                       </button>
                     );
                   })}
