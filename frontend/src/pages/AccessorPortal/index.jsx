@@ -248,6 +248,9 @@ export default function AccessorPortal() {
   const [submissions, setSubmissions] = useState([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [expandedSubmission, setExpandedSubmission] = useState(null);
+  const [aiReports, setAiReports] = useState([]);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [showAIReportModal, setShowAIReportModal] = useState(false);
 
   // Load existing sessions on mount
   useEffect(() => {
@@ -311,6 +314,7 @@ export default function AccessorPortal() {
       setSelectedSession(null);
       setSubmissions([]);
       setExpandedSubmission(null);
+      setAiReports([]);
       return;
     }
     setSelectedSession(session);
@@ -323,10 +327,41 @@ export default function AccessorPortal() {
       });
       const data = await response.json();
       if (response.ok) setSubmissions(data.submissions || []);
+
+      // Also fetch existing AI reports
+      const aiResp = await fetch(`${API}/api/sessions/${session._id}/ai-report`, {
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      const aiData = await aiResp.json();
+      if (aiResp.ok) setAiReports(aiData.reports || []);
+
     } catch (err) {
-      console.error('Error fetching submissions:', err);
+      console.error('Error fetching data:', err);
     } finally {
       setLoadingSubmissions(false);
+    }
+  };
+
+  const handleGenerateAIReport = async () => {
+    if (!selectedSession) return;
+    setGeneratingAI(true);
+    try {
+      const response = await fetch(`${API}/api/sessions/${selectedSession._id}/ai-report/generate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setAiReports(data.reports || []);
+        alert('Advanced AI Reports generated successfully!');
+      } else {
+        alert(data.message || 'Failed to generate AI report');
+      }
+    } catch (err) {
+      console.error('Error generating AI report:', err);
+      alert('Failed to generate AI report. Check backend logs.');
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -352,7 +387,18 @@ export default function AccessorPortal() {
     }
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem', padding: '1rem', background: 'var(--gray-900)', borderRadius: '0.5rem' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gray-200)', marginBottom: '0.5rem' }}>Submissions</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gray-200)' }}>Submissions</h3>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button 
+              className={`btn btn-sm ${aiReports.length > 0 ? 'btn-success' : 'btn-primary'}`}
+              onClick={aiReports.length > 0 ? () => setShowAIReportModal(true) : handleGenerateAIReport}
+              disabled={generatingAI}
+            >
+              {generatingAI ? '⏳ Generating...' : aiReports.length > 0 ? '📊 View Advanced AI Reports' : '🤖 Generate Advanced AI Assessment'}
+            </button>
+          </div>
+        </div>
         {submissions.map((sub, idx) => (
           <div key={idx} style={{
             padding: '1rem', background: 'var(--gray-800)', borderRadius: '0.5rem', border: '1px solid var(--gray-700)'
@@ -614,6 +660,97 @@ export default function AccessorPortal() {
                  )}
               </div>
            </div>
+        </div>
+      )}
+      {/* ===== POPUP FOR ADVANCED AI REPORT ===== */}
+      {showAIReportModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10001,
+          background: 'rgba(0,0,0,0.95)', display: 'flex', flexDirection: 'column',
+          padding: '2rem', animation: 'fadeIn 0.2s ease-out'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div>
+              <h2 style={{ color: 'white', margin: 0, fontSize: '1.8rem' }}>Advanced Behavioral AI Reports</h2>
+              <p style={{ color: 'var(--gray-400)', margin: 0 }}>GPE OLQ Analysis Engine v2.0 (Gemini Powered)</p>
+            </div>
+            <button className="btn btn-secondary" onClick={() => setShowAIReportModal(false)}>✕ Close</button>
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {aiReports.map((report, idx) => (
+              <div key={idx} className="card" style={{ background: 'var(--gray-800)', border: '1px solid var(--gray-700)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', borderBottom: '1px solid var(--gray-700)', paddingBottom: '1rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '0.25rem' }}>{report.cadetName}</h3>
+                    <p style={{ color: 'var(--gray-400)', fontSize: '0.85rem' }}>Chest No: {report.chestNo} · Analysis Type: {report.analysisVersion || 'AI'}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ color: 'var(--gray-500)', fontSize: '0.75rem', textTransform: 'uppercase' }}>Overall Score</p>
+                    <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--gray-100)' }}>
+                      {report.overallOPS} <span style={{ fontSize: '1rem', color: 'var(--gray-500)', fontWeight: 'normal' }}>/ 100</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '2rem' }}>
+                  {/* Radar/Bar Chart Mockup for OLQs */}
+                  <div>
+                    <h4 style={{ fontSize: '0.9rem', color: 'var(--gray-300)', marginBottom: '1rem', textTransform: 'uppercase' }}>OLQ Radar</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {Object.entries(report.olqRadar || {}).map(([key, score]) => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ width: '35px', fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--gray-400)' }}>{key}</span>
+                          <div style={{ flex: 1, height: '8px', background: 'var(--gray-900)', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ 
+                              width: `${score * 10}%`, height: '100%', 
+                              background: score >= 8 ? 'var(--success)' : score >= 5 ? 'var(--primary)' : 'var(--danger)',
+                              boxShadow: '0 0 10px rgba(59,130,246,0.3)'
+                            }} />
+                          </div>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', width: '25px', textAlign: 'right' }}>{score}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div>
+                      <h4 style={{ fontSize: '0.9rem', color: 'var(--gray-300)', marginBottom: '0.75rem', textTransform: 'uppercase' }}>Qualitative Summary</h4>
+                      <p style={{ color: 'var(--gray-300)', fontSize: '0.95rem', lineHeight: '1.6', background: 'var(--gray-900)', padding: '1rem', borderRadius: '0.5rem', borderLeft: '3px solid var(--primary)' }}>
+                        {report.qualitativeSummary}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div>
+                        <h4 style={{ fontSize: '0.8rem', color: 'var(--success)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Behavioral Highlights</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {report.behavioralHighlights?.map((h, i) => (
+                            <div key={i} style={{ fontSize: '0.8rem', color: 'var(--gray-300)', background: 'rgba(16,185,129,0.1)', padding: '0.5rem', borderRadius: '0.3rem' }}>
+                              <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>[{h.olqSignal}]</span> {h.description}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 style={{ fontSize: '0.8rem', color: 'var(--danger)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Caution Flags</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {report.cautionFlags?.length > 0 ? report.cautionFlags.map((f, i) => (
+                            <div key={i} style={{ fontSize: '0.8rem', color: 'var(--gray-300)', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '0.3rem' }}>
+                              <span style={{ color: 'var(--danger)', fontWeight: 'bold' }}>!</span> {f.description}
+                            </div>
+                          )) : (
+                            <p style={{ color: 'var(--gray-500)', fontSize: '0.8rem', fontStyle: 'italic' }}>No caution flags detected.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

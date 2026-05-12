@@ -351,6 +351,7 @@ const SessionSchema = new mongoose.Schema({
       severity: { type: String, enum: ['low', 'medium', 'high'] }
     }],
     groupComparison: Object, // percentile ranks
+    analysisVersion: String,
     generatedAt: { type: Date, default: Date.now }
   }],
 

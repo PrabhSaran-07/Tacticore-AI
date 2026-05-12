@@ -1,6 +1,7 @@
 const Session = require('../models/Session');
 const crypto = require('crypto');
 const { analyzeSubmission, analyzeFullSession } = require('../services/olqAnalyzer');
+const { analyzeCadetSession } = require('../services/geminiAnalyzer');
 
 const generateSessionCode = () => crypto.randomBytes(3).toString('hex').toUpperCase();
 
@@ -390,19 +391,71 @@ exports.generateAIReport = async (req, res) => {
 
     const reports = [];
     for (const participant of session.participants) {
-      const report = analyzeFullSession(participant._id.toString(), `${participant.chestNo} - ${participant.name}`, session);
+      let report;
+      try {
+        if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+          const geminiResult = await analyzeCadetSession(session, participant);
+          // Map Gemini format back to internal format if needed
+          report = {
+            cadetId: participant._id,
+            cadetName: participant.name,
+            chestNo: participant.chestNo,
+            olqRadar: Object.fromEntries(Object.entries(geminiResult.olq_scores).map(([k, v]) => [k, v.score])),
+            overallOPS: geminiResult.ops_score,
+            qualitativeSummary: geminiResult.qualitative_summary,
+            behavioralHighlights: geminiResult.strengths.map(s => ({
+              timestamp: new Date(new Date(session.startedAt).getTime() + s.timestamp_ms),
+              description: s.behavioral_moment,
+              olqSignal: s.olq
+            })),
+            cautionFlags: geminiResult.caution_flags.map(f => ({
+              description: f.description,
+              timestamp: new Date(new Date(session.startedAt).getTime() + f.timestamp_ms),
+              severity: f.type === 'WITHDRAWAL' ? 'high' : 'medium'
+            })),
+            generatedAt: new Date(),
+            analysisVersion: "2.0 (Gemini)"
+          };
+        } else {
+          throw new Error("Gemini API Key not configured");
+        }
+      } catch (geminiError) {
+        const heuristicReport = analyzeFullSession(participant._id.toString(), participant.name, session);
+        report = {
+          cadetId: participant._id,
+          cadetName: participant.name,
+          chestNo: participant.chestNo,
+          olqRadar: heuristicReport.scores,
+          overallOPS: heuristicReport.overallScore * 10, // scale to 100
+          qualitativeSummary: heuristicReport.recommendation,
+          behavioralHighlights: heuristicReport.strengths.map(s => ({
+            description: `Heuristic signal: ${s.name} scored ${s.score}`,
+            olqSignal: s.name
+          })),
+          cautionFlags: heuristicReport.improvements.filter(i => i.score < 4).map(i => ({
+            description: `Area for growth: ${i.name}`,
+            severity: 'medium'
+          })),
+          analysisVersion: "1.0 (Heuristic)",
+          generatedAt: new Date()
+        };
+      }
       reports.push(report);
     }
 
     // Compute group comparison percentiles
     const allScores = {};
     const OLQ_KEYS = ['EI', 'RA', 'OA', 'PE', 'SA', 'C', 'SR', 'IN', 'SC', 'SD', 'AIG', 'L', 'D', 'Cour'];
-    OLQ_KEYS.forEach(k => { allScores[k] = reports.map(r => r.olqRadar[k]).sort((a, b) => a - b); });
+    OLQ_KEYS.forEach(k => { 
+      allScores[k] = reports.map(r => r.olqRadar[k] || 0).sort((a, b) => a - b); 
+    });
+    
     reports.forEach(r => {
       r.groupComparison = {};
       OLQ_KEYS.forEach(k => {
         const arr = allScores[k];
-        const rank = arr.indexOf(r.olqRadar[k]);
+        const val = r.olqRadar[k] || 0;
+        const rank = arr.indexOf(val);
         r.groupComparison[k] = Math.round(((rank + 1) / arr.length) * 100);
       });
     });
