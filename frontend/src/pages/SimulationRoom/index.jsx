@@ -556,13 +556,12 @@ export default function SimulationRoom({ user, onLogout }) {
           </div>
           {/* Sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', borderLeft: '1px solid rgba(14,165,233,0.12)', overflow: 'hidden' }}>
-            {/* Tools */}
+            {/* Map Actions */}
             <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Tools</p>
-              <div style={{ display: 'flex', gap: '0.2rem' }}>
-                {[{ m: 'view', l: '👁' }, { m: 'add_truck', l: '🚒' }, { m: 'add_person', l: '👷' }, { m: 'add_pump', l: '💧' }, { m: 'draw_path', l: '✏' }].map(t => (
-                  <button key={t.m} onClick={() => setActiveMode(t.m)} style={{ padding: '0.3rem 0.5rem', borderRadius: '0.2rem', border: activeMode === t.m ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === t.m ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.95rem' }}>{t.l}</button>
-                ))}
+              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Map Actions</p>
+              <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
+                <button onClick={() => setActiveMode('view')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'view' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'view' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>👁 View</button>
+                <button onClick={() => setActiveMode('draw_path')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'draw_path' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'draw_path' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem' }}>✏ Mark Route</button>
               </div>
             </div>
             {/* Legend */}
@@ -580,26 +579,37 @@ export default function SimulationRoom({ user, onLogout }) {
             )}
             {/* Resources */}
             <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources</p>
-              {[
-                { k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
-                { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
-                { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 },
-                { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
-                { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
-                { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
-                { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
-                { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 }
-              ].filter(r => r.mx > 0).map(r => {
-                const used = currentMarkers.filter(m => m.type === r.k).length;
-                const rem = Math.max(0, r.mx - used);
-                return (
-                  <div key={r.k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.15rem 0' }}>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--gray-300)' }}>{r.i} {r.l}</span>
-                    <span style={{ fontSize: '0.72rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>{rem}/{r.mx}</span>
-                  </div>
-                );
-              })}
+              <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources (Select to Place)</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                {[
+                  { k: 'add_truck', i: '🚒', l: 'Fire Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
+                  { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
+                  { k: 'add_pump', i: '💧', l: 'Water Pumps', mx: session?.assignedResources?.waterPumps || 0 },
+                  { k: 'add_ambulance', i: '🚑', l: 'Ambulance', mx: session?.assignedResources?.ambulance || 0 },
+                  { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
+                  { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
+                  { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
+                  { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
+                  ...(session?.assignedResources?.customItems || []).map(ci => ({
+                    k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
+                  }))
+                ].filter(r => r.mx > 0).map(r => {
+                  const used = currentMarkers.filter(m => m.type === r.k).length;
+                  const rem = Math.max(0, r.mx - used);
+                  const isSelected = activeMode === r.k;
+                  return (
+                    <button key={r.k} onClick={() => setActiveMode(r.k)} style={{ 
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.5rem', 
+                      borderRadius: '0.2rem', cursor: 'pointer', border: 'none', textAlign: 'left',
+                      background: isSelected ? 'rgba(14,165,233,0.2)' : 'var(--gray-800)',
+                      boxShadow: isSelected ? 'inset 0 0 0 1px var(--primary)' : 'inset 0 0 0 1px var(--gray-700)'
+                    }}>
+                      <span style={{ fontSize: '0.72rem', color: isSelected ? 'white' : 'var(--gray-300)' }}>{r.i} {r.l}</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace' }}>{rem}/{r.mx}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             {/* Chat */}
             <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -675,7 +685,10 @@ export default function SimulationRoom({ user, onLogout }) {
                 { k: 'add_police', i: '🚓', l: 'Police', mx: session?.assignedResources?.police || 0 },
                 { k: 'add_citizen', i: '🚶', l: 'Citizens', mx: session?.assignedResources?.citizen || 0 },
                 { k: 'add_car', i: '🚗', l: 'Cars', mx: session?.assignedResources?.car || 0 },
-                { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 }
+                { k: 'add_bike', i: '🚲', l: 'Bikes', mx: session?.assignedResources?.bike || 0 },
+                ...(session?.assignedResources?.customItems || []).map(ci => ({
+                  k: `add_custom_${ci.name}`, i: '📦', l: ci.name, mx: ci.quantity
+                }))
               ].filter(r => r.mx > 0).map(r => {
                 const used = currentMarkers.filter(m => m.type === r.k).length;
                 return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', padding: '0.1rem 0', color: 'var(--gray-300)' }}><span>{r.i} {r.l}</span><span style={{ fontFamily: 'monospace', fontWeight: '700', color: used >= r.mx ? 'var(--danger)' : 'var(--success)' }}>{used}/{r.mx}</span></div>;
