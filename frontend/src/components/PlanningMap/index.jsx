@@ -310,14 +310,15 @@ function Element3D({ el }) {
       const angle = Math.atan2(dy, dx);
       const midX = (el.x1 + el.x2) / 2 - 400;
       const midZ = (el.y1 + el.y2) / 2 - 275;
-      const isHighway = el.width > 30;
+      const isHighway = el.width > 30 && !el.color;
+      const roadColor = el.color || (isHighway ? "#333333" : "#8b7355");
       if (isNaN(length)) return null;
       
       return (
         <group position={[midX, 0.6, midZ]} rotation={[0, -angle, 0]}>
           <mesh rotation={[-Math.PI/2, 0, 0]}>
             <planeGeometry args={[length, el.width || 20]} />
-            <meshStandardMaterial color={isHighway ? "#333333" : "#8b7355"} />
+            <meshStandardMaterial color={roadColor} />
           </mesh>
           {isHighway && (
              <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.1, 0]}>

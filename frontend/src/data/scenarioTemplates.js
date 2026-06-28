@@ -222,11 +222,93 @@ const SCENARIO_TEMPLATES = {
     bgImage: '/assets/jungle_mine.png',
     elements: [
       { type: 'label', x: 400, y: 30, text: 'Scale - 6CM = 2KM', color: '#111', size: 14 },
-      { type: 'start_point', x: 400, y: 520, label: 'Point A (Riverside)' },
-      { type: 'end_point', x: 100, y: 150, label: 'Almora Village' },
-      { type: 'threat', icon: '🛤', x: 300, y: 350, label: 'Fishplate Removed', labelColor: '#ef4444' },
-      { type: 'threat', icon: '💣', x: 550, y: 400, label: 'Road Mine (CM in 1hr)', labelColor: '#ef4444' },
-      { type: 'threat', icon: '🐅', x: 350, y: 150, label: 'Tigress Attack', labelColor: '#ef4444' },
+
+      // River (Blue curved path)
+      { type: 'road', x1: 0, y1: 520, x2: 350, y2: 450, width: 45, color: '#3b82f6' },
+      { type: 'road', x1: 350, y1: 450, x2: 450, y2: 470, width: 45, color: '#3b82f6' },
+      { type: 'road', x1: 450, y1: 470, x2: 800, y2: 250, width: 45, color: '#3b82f6' },
+
+      // Highway (Black diagonal road)
+      { type: 'road', x1: 420, y1: 0, x2: 600, y2: 550, width: 35 },
+      
+      // Bridge (where Highway crosses River)
+      { type: 'bridge', x: 550, y: 440, vertical: true, length: 70, width: 38, rotation: -0.3 }, 
+
+      // Railway Track
+      { type: 'railway', x1: 0, y1: 400, x2: 800, y2: 120 },
+
+      // Dirt Paths
+      // Path 1: From Railway to Almora
+      { type: 'road', x1: 320, y1: 290, x2: 200, y2: 200, width: 15 },
+      // Path 2: From Railway to Riverside
+      { type: 'road', x1: 320, y1: 290, x2: 360, y2: 430, width: 15 },
+
+      // Villages / Buildings
+      // Almora (Top-Left)
+      { type: 'village', x: 150, y: 150, label: 'Almora' },
+      { type: 'house', x: 130, y: 130 },
+      { type: 'house', x: 170, y: 120 },
+      { type: 'house', x: 180, y: 160 },
+      { type: 'house', x: 120, y: 180 },
+
+      // Mandwa (Top-Right)
+      { type: 'village', x: 700, y: 100, label: 'Mandwa' },
+      { type: 'house', x: 680, y: 80 },
+      { type: 'house', x: 720, y: 120 },
+      { type: 'building', x: 700, y: 90 }, // Tower
+
+      // Dilnagar / Police Post (Bottom-Left)
+      { type: 'building', x: 150, y: 450, label: 'Dilnagar' },
+      { type: 'house', x: 120, y: 430 },
+      { type: 'house', x: 180, y: 420 },
+      { type: 'house', x: 140, y: 480 },
+
+      // Boats
+      { type: 'boat', x: 320, y: 460, label: 'Boat' },
+
+      // Compass
+      { type: 'compass', x: 720, y: 500 },
+
+      // Trees - Jungle (Top-Middle-Left)
+      { type: 'tree_pine', x: 300, y: 50 },
+      { type: 'tree_pine', x: 330, y: 80 },
+      { type: 'tree_pine', x: 360, y: 60 },
+      { type: 'tree_pine', x: 390, y: 90 },
+      { type: 'tree_pine', x: 320, y: 120 },
+      { type: 'tree_pine', x: 350, y: 140 },
+      { type: 'tree_pine', x: 380, y: 110 },
+      { type: 'tree_pine', x: 400, y: 150 },
+      { type: 'tree_pine', x: 340, y: 170 },
+      { type: 'tree_pine', x: 370, y: 190 },
+
+      // Trees - Mandwa
+      { type: 'tree_pine', x: 650, y: 60 },
+      { type: 'tree_pine', x: 620, y: 100 },
+      { type: 'tree_pine', x: 660, y: 130 },
+      { type: 'tree_pine', x: 740, y: 60 },
+      { type: 'tree_pine', x: 760, y: 100 },
+
+      // Trees - Bottom Right
+      { type: 'tree_pine', x: 650, y: 350 },
+      { type: 'tree_pine', x: 720, y: 380 },
+      { type: 'tree_pine', x: 680, y: 430 },
+
+      // Trees - Bottom Left
+      { type: 'tree_pine', x: 80, y: 350 },
+      { type: 'tree_pine', x: 100, y: 500 },
+      { type: 'tree_pine', x: 50, y: 460 },
+      
+      // Trees - Almora Palm Trees
+      { type: 'tree_palm', x: 220, y: 150 },
+      { type: 'tree_palm', x: 240, y: 100 },
+      { type: 'tree_palm', x: 190, y: 80 },
+
+      // Original Markers (Aligned to 2D image)
+      { type: 'start_point', x: 470, y: 500, label: 'Point A (Riverside)' },
+      { type: 'end_point', x: 150, y: 150, label: 'Almora Village' },
+      { type: 'threat', icon: '🛤', x: 300, y: 300, label: 'Fishplate Removed', labelColor: '#ef4444' },
+      { type: 'threat', icon: '💣', x: 580, y: 370, label: 'Road Mine (CM in 1hr)', labelColor: '#ef4444' },
+      { type: 'threat', icon: '🐅', x: 380, y: 100, label: 'Tigress Attack', labelColor: '#ef4444' },
       { type: 'fire', icon: '🔥', x: 700, y: 150, label: 'Haystack Fire', labelColor: '#ef4444' },
       { type: 'poi', icon: '🆘', x: 150, y: 450, label: 'Police Post (Dilnagar)', labelColor: '#3b82f6' }
     ],
