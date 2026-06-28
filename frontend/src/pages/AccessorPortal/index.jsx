@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateSessionWizard from '../../components/CreateSessionWizard';
 import SCENARIO_TEMPLATES from '../../data/scenarioTemplates';
+import PlanningMap from '../../components/PlanningMap';
 
 const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
@@ -197,7 +198,7 @@ function SubmissionMap({ markers = [], paths = [], scenarioId }) {
   const handleShowAll = () => setStep(-1);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minHeight: '600px' }}>
       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', background: 'var(--gray-800)', padding: '0.5rem', borderRadius: '0.5rem' }}>
         <button className="btn btn-sm btn-secondary" onClick={handleReset} disabled={step === 0}>⏮ Reset</button>
         <button className="btn btn-sm btn-secondary" onClick={handlePrev} disabled={step === 0}>◀ Prev</button>
@@ -207,47 +208,13 @@ function SubmissionMap({ markers = [], paths = [], scenarioId }) {
         <button className="btn btn-sm btn-secondary" onClick={handleNext} disabled={step === -1 || step === totalSteps}>Next ▶</button>
         <button className="btn btn-sm btn-primary" onClick={handleShowAll} disabled={step === -1 || step === totalSteps}>⏭ Show All</button>
       </div>
-      <div style={{ width: '100%', minHeight: '250px', borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', background: template.terrain || '#3d6b47', display: 'flex', alignItems: 'center' }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block' }}>
-          <rect x="0" y="0" width={W} height={H} fill={template.terrain || '#3d6b47'} />
-          
-          {template.bgImage && (
-            <image href={template.bgImage} x="0" y="0" width={W} height={H} preserveAspectRatio="none" />
-          )}
-
-          {/* Scenario backdrop (faded if image exists, or normal) */}
-          {template.elements.map((el, idx) => {
-             const isInfra = ['road', 'curved_road', 'river', 'track', 'vegetation', 'tree_pine', 'tree_palm', 'house', 'building', 'bridge', 'zone'].includes(el.type);
-             if (template.bgImage && isInfra) return null;
-             return (
-               <g key={idx} opacity={template.bgImage ? 1 : 0.6}>
-                 {renderSubmissionElement(el, idx)}
-               </g>
-             );
-          })}
-
-          {/* Arrow def */}
-          <defs>
-            <marker id="sub-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-              <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee" />
-            </marker>
-          </defs>
-
-          {/* ===== CADET'S SUBMITTED PATHS ===== */}
-          {visiblePaths.map((path, idx) => (
-            <polyline key={idx} points={(path.points || []).map(p => `${p.x},${p.y}`).join(' ')}
-              stroke={path.color || '#22d3ee'} strokeWidth="3" fill="none" strokeDasharray="8,4" markerEnd="url(#sub-arrow)" />
-          ))}
-
-          {/* ===== CADET'S SUBMITTED MARKERS ===== */}
-          {visibleMarkers.map((m, idx) => (
-            <g key={idx}>
-              <circle cx={m.x} cy={m.y} r="18" fill={m.color || '#3b82f6'} fillOpacity="0.3" stroke={m.color || '#3b82f6'} strokeWidth="2"/>
-              <text x={m.x} y={m.y + 6} textAnchor="middle" fontSize="18">{m.icon || '📍'}</text>
-              <text x={m.x} y={m.y + 26} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{m.label || ''}</text>
-            </g>
-          ))}
-        </svg>
+      <div style={{ width: '100%', flex: 1, borderRadius: '0.5rem', overflow: 'hidden', border: '1px solid var(--gray-700)', display: 'flex', alignItems: 'center' }}>
+        <PlanningMap 
+          readOnly={true}
+          scenarioId={scenarioId}
+          initialMarkers={visibleMarkers}
+          initialPaths={visiblePaths}
+        />
       </div>
     </div>
   );
@@ -615,7 +582,7 @@ export default function AccessorPortal() {
            
            <div style={{ display: 'flex', gap: '1.5rem', flex: 1, overflow: 'hidden' }}>
               <div style={{ flex: '0 0 75%', background: 'var(--gray-800)', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', border: '1px solid var(--gray-700)' }}>
-                 <div style={{ flex: 1, overflow: 'auto', padding: '1rem' }}>
+                 <div style={{ flex: 1, overflow: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
                    <SubmissionMap
                      markers={expandedSubmission.sub.mapState?.markers || []}
                      paths={expandedSubmission.sub.mapState?.paths || []}

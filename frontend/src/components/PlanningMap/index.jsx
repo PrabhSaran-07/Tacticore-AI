@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, forwardRef, useImperativeHandle, Suspense 
 import socket from '../../services/socket';
 import SCENARIO_TEMPLATES from '../../data/scenarioTemplates';
 import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Billboard, Text, Line, Html } from '@react-three/drei';
+import { OrbitControls, Billboard, Text, Line, Html, Sky, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 const RESOURCE_ICONS = {
@@ -177,21 +177,46 @@ function renderElement(el, idx) {
 }
 
 // ── 3D Helper Components ──
-function MapGround3D({ bgImage, terrain }) {
-  const texture = bgImage ? useLoader(THREE.TextureLoader, bgImage) : null;
+function MapGroundTextured({ bgImage, terrain }) {
+  const texture = useLoader(THREE.TextureLoader, bgImage);
   return (
     <group position={[0, -5, 0]}>
-      <mesh>
+      <mesh receiveShadow>
         <boxGeometry args={[800, 10, 550]} />
         <meshStandardMaterial attach="material-0" color="#5c3a21" /> 
         <meshStandardMaterial attach="material-1" color="#5c3a21" /> 
-        <meshStandardMaterial attach="material-2" color={texture ? '#ffffff' : (terrain || '#7db952')} map={texture || undefined} /> 
+        <meshStandardMaterial attach="material-2" color="#ffffff" map={texture} /> 
         <meshStandardMaterial attach="material-3" color="#5c3a21" /> 
         <meshStandardMaterial attach="material-4" color="#5c3a21" /> 
         <meshStandardMaterial attach="material-5" color="#5c3a21" /> 
       </mesh>
     </group>
   );
+}
+
+function MapGroundSolid({ terrain }) {
+  return (
+    <group position={[0, -5, 0]}>
+      <mesh receiveShadow>
+        <boxGeometry args={[800, 10, 550]} />
+        <meshStandardMaterial attach="material-0" color="#5c3a21" /> 
+        <meshStandardMaterial attach="material-1" color="#5c3a21" /> 
+        <meshStandardMaterial attach="material-2" color={terrain || '#7db952'} /> 
+        <meshStandardMaterial attach="material-3" color="#5c3a21" /> 
+        <meshStandardMaterial attach="material-4" color="#5c3a21" /> 
+        <meshStandardMaterial attach="material-5" color="#5c3a21" /> 
+      </mesh>
+    </group>
+  );
+}
+
+function MapGround3D({ bgImage, terrain, showImage = false }) {
+  // Safely avoid conditional hooks by splitting into two separate components.
+  // showImage is false by default so we don't render the 2D background image in 3D mode!
+  if (showImage && bgImage) {
+    return <MapGroundTextured bgImage={bgImage} terrain={terrain} />;
+  }
+  return <MapGroundSolid terrain={terrain} />;
 }
 
 function Element3D({ el }) {
@@ -208,7 +233,7 @@ function Element3D({ el }) {
           </mesh>
           {el.label && (
             <Billboard position={[0, 10, 0]}>
-              <Text fontSize={10} color="#f3f4f6" outlineWidth={0.5} outlineColor="#000000" font="monospace">{el.label}</Text>
+              <Text fontSize={10} color="#f3f4f6" outlineWidth={0.5} outlineColor="#000000">{el.label}</Text>
             </Billboard>
           )}
         </group>
@@ -269,15 +294,36 @@ function Element3D({ el }) {
     case 'house':
       return (
         <group position={[X, 0, Z]}>
-          <mesh position={[0, 9, 0]}><boxGeometry args={[25, 18, 25]} /><meshStandardMaterial color="#8b7355" /></mesh>
-          <mesh position={[0, 22, 0]} rotation={[0, Math.PI/4, 0]}><coneGeometry args={[22, 12, 4]} /><meshStandardMaterial color="#5c3a21" flatShading /></mesh>
+          <mesh castShadow receiveShadow position={[0, 9, 0]}><boxGeometry args={[25, 18, 25]} /><meshStandardMaterial color="#8b7355" /></mesh>
+          <mesh castShadow receiveShadow position={[0, 22, 0]} rotation={[0, Math.PI/4, 0]}><coneGeometry args={[22, 12, 4]} /><meshStandardMaterial color="#5c3a21" flatShading /></mesh>
+          {el.label && (
+            <Billboard position={[0, 40, 0]}>
+              <Text fontSize={10} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
+            </Billboard>
+          )}
+        </group>
+      );
+    case 'village':
+      return (
+        <group position={[X, 0, Z]}>
+           <group position={[0, 10, 0]}>
+             <mesh castShadow receiveShadow position={[-12, 0, 10]}><boxGeometry args={[15, 12, 15]} /><meshStandardMaterial color="#d1d5db" /></mesh>
+             <mesh castShadow receiveShadow position={[-12, 10, 10]} rotation={[0, Math.PI/4, 0]}><coneGeometry args={[12, 8, 4]} /><meshStandardMaterial color="#b91c1c" /></mesh>
+             <mesh castShadow receiveShadow position={[12, 0, -5]}><boxGeometry args={[15, 12, 15]} /><meshStandardMaterial color="#d1d5db" /></mesh>
+             <mesh castShadow receiveShadow position={[12, 10, -5]} rotation={[0, Math.PI/4, 0]}><coneGeometry args={[12, 8, 4]} /><meshStandardMaterial color="#b91c1c" /></mesh>
+           </group>
+           {el.label && (
+             <Billboard position={[0, 35, 0]}>
+               <Text fontSize={12} color={el.labelColor || "#fcd34d"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
+             </Billboard>
+           )}
         </group>
       );
     case 'building':
       const isSch = el.label?.includes('School') || el.label?.includes('College');
       return (
         <group position={[X, 0, Z]}>
-          <mesh position={[0, 20, 0]}><boxGeometry args={[35, 40, 35]} /><meshStandardMaterial color={isSch ? "#d97706" : "#64748b"} /></mesh>
+          <mesh castShadow receiveShadow position={[0, 20, 0]}><boxGeometry args={[35, 40, 35]} /><meshStandardMaterial color={isSch ? "#d97706" : "#64748b"} /></mesh>
           {el.label && (
             <Billboard position={[0, 50, 0]}>
               <Text fontSize={10} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
@@ -288,28 +334,30 @@ function Element3D({ el }) {
     case 'tree_pine':
       return (
         <group position={[X, 0, Z]}>
-          <mesh position={[0, 4, 0]}><cylinderGeometry args={[1.5, 1.5, 8]} /><meshStandardMaterial color="#422006" /></mesh>
-          <mesh position={[0, 15, 0]}><coneGeometry args={[10, 18, 5]} /><meshStandardMaterial color="#14532d" flatShading /></mesh>
+          <mesh castShadow receiveShadow position={[0, 4, 0]}><cylinderGeometry args={[1.5, 1.5, 8]} /><meshStandardMaterial color="#422006" /></mesh>
+          <mesh castShadow receiveShadow position={[0, 15, 0]}><coneGeometry args={[10, 18, 5]} /><meshStandardMaterial color="#14532d" flatShading /></mesh>
         </group>
       );
     case 'tree_palm':
       return (
         <group position={[X, 0, Z]}>
-          <mesh position={[0, 6, 0]} rotation={[0.1, 0, 0.1]}><cylinderGeometry args={[1, 1.5, 12]} /><meshStandardMaterial color="#5c3a21" /></mesh>
-          <mesh position={[1, 14, 1]}><sphereGeometry args={[7, 7, 7]} /><meshStandardMaterial color="#166534" /></mesh>
+          <mesh castShadow receiveShadow position={[0, 6, 0]} rotation={[0.1, 0, 0.1]}><cylinderGeometry args={[1, 1.5, 12]} /><meshStandardMaterial color="#5c3a21" /></mesh>
+          <mesh castShadow receiveShadow position={[1, 14, 1]}><sphereGeometry args={[7, 7, 7]} /><meshStandardMaterial color="#166534" /></mesh>
         </group>
       );
     case 'boat':
       return (
-        <group position={[X, 0, Z]}>
-          <mesh position={[0, 3, 0]}><boxGeometry args={[30, 6, 12]} /><meshStandardMaterial color="#ef4444" /></mesh>
-          <mesh position={[-4, 8, 0]}><boxGeometry args={[12, 5, 8]} /><meshStandardMaterial color="white" /></mesh>
-          {el.label && (
-            <Billboard position={[0, 18, 0]}>
-              <Text fontSize={8} color="white" outlineWidth={0.4} outlineColor="#000000">{el.label}</Text>
-            </Billboard>
-          )}
-        </group>
+        <Float speed={2} rotationIntensity={0.2} floatIntensity={0.8} position={[X, 0, Z]}>
+          <group>
+            <mesh castShadow position={[0, 3, 0]}><boxGeometry args={[30, 6, 12]} /><meshStandardMaterial color="#ef4444" /></mesh>
+            <mesh castShadow position={[-4, 8, 0]}><boxGeometry args={[12, 5, 8]} /><meshStandardMaterial color="white" /></mesh>
+            {el.label && (
+              <Billboard position={[0, 18, 0]}>
+                <Text fontSize={8} color="white" outlineWidth={0.4} outlineColor="#000000">{el.label}</Text>
+              </Billboard>
+            )}
+          </group>
+        </Float>
       );
     case 'river':
       return el.label ? (
@@ -411,19 +459,37 @@ function Element3D({ el }) {
       );
     case 'poi':
       return (
-        <group position={[X, 10, Z]}>
-          <mesh position={[0, 0, 0]} rotation={[Math.PI, 0, 0]}>
-            <coneGeometry args={[4, 10, 8]} />
-            <meshStandardMaterial color={el.labelColor || "#ef4444"} />
+        <Float speed={2.5} rotationIntensity={0.4} floatIntensity={1} position={[X, 10, Z]}>
+          <group>
+            <mesh castShadow position={[0, 0, 0]} rotation={[Math.PI, 0, 0]}>
+              <coneGeometry args={[4, 10, 8]} />
+              <meshStandardMaterial color={el.labelColor || "#ef4444"} />
+            </mesh>
+            <mesh castShadow position={[0, 8, 0]}>
+              <sphereGeometry args={[6, 16, 16]} />
+              <meshStandardMaterial color={el.labelColor || "#ef4444"} />
+            </mesh>
+            <Billboard position={[0, 22, 0]}>
+              <Text fontSize={10} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
+                {el.icon} {el.label}
+              </Text>
+            </Billboard>
+          </group>
+        </Float>
+      );
+    case 'compass':
+      return (
+        <group position={[X, 1, Z]}>
+          <mesh position={[0, 0, -10]} rotation={[-Math.PI/2, 0, 0]} castShadow>
+             <cylinderGeometry args={[0, 5, 20, 3]} />
+             <meshStandardMaterial color="#ef4444" />
           </mesh>
-          <mesh position={[0, 8, 0]}>
-            <sphereGeometry args={[6, 16, 16]} />
-            <meshStandardMaterial color={el.labelColor || "#ef4444"} />
+          <mesh position={[0, 0, 10]} rotation={[Math.PI/2, 0, 0]} castShadow>
+             <cylinderGeometry args={[0, 5, 20, 3]} />
+             <meshStandardMaterial color="#f3f4f6" />
           </mesh>
-          <Billboard position={[0, 22, 0]}>
-            <Text fontSize={10} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
-              {el.icon} {el.label}
-            </Text>
+          <Billboard position={[0, 15, -25]}>
+            <Text fontSize={16} color="#ef4444" outlineWidth={0.6} outlineColor="#000000" fontWeight="bold">N</Text>
           </Billboard>
         </group>
       );
@@ -476,11 +542,14 @@ function Element3D({ el }) {
   }
 }
 
-const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, scenarioId, assignedResources, onMarkersChange, readOnly = false }, ref) {
+const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, scenarioId, assignedResources, onMarkersChange, readOnly = false, initialMarkers = null, initialPaths = null }, ref) {
   const svgRef = useRef(null);
-  const [markers, setMarkers] = useState([]);
-  const [paths, setPaths] = useState([]);
+  const [internalMarkers, setMarkers] = useState([]);
+  const [internalPaths, setPaths] = useState([]);
   const [drawingPath, setDrawingPath] = useState(null);
+  
+  const markers = initialMarkers !== null ? initialMarkers : internalMarkers;
+  const paths = initialPaths !== null ? initialPaths : internalPaths;
   
   const [is3D, setIs3D] = useState(false);
 
@@ -706,18 +775,19 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
         onWheel={!is3D ? handleWheel : undefined}
       >
         {is3D ? (
-          <Canvas camera={{ position: [0, 400, 400], fov: 50 }}>
+          <Canvas shadows camera={{ position: [0, 400, 400], fov: 50 }}>
             <ambientLight intensity={1.2} />
-            <directionalLight position={[100, 300, 100]} intensity={1.5} castShadow />
+            <directionalLight position={[100, 300, 100]} intensity={1.5} castShadow shadow-mapSize={[2048, 2048]} />
+            <Sky sunPosition={[100, 20, 100]} turbidity={0.3} rayleigh={0.5} />
             <Suspense fallback={
               <group position={[0, -5, 0]}>
-                <mesh>
+                <mesh receiveShadow>
                   <boxGeometry args={[800, 10, 550]} />
                   <meshStandardMaterial color={terrain || '#7db952'} />
                 </mesh>
               </group>
             }>
-              <MapGround3D bgImage={bgImage} terrain={terrain} />
+              <MapGround3D bgImage={bgImage} terrain={terrain} showImage={false} />
             </Suspense>
             
             {/* Invisible clickable plane for 3D marker placement */}
