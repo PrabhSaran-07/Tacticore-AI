@@ -456,11 +456,11 @@ function Element3D({ el }) {
       return (
         <Float speed={2} rotationIntensity={0.2} floatIntensity={0.8} position={[X, 0, Z]}>
           <group>
-            <mesh castShadow position={[0, 3, 0]}><boxGeometry args={[30, 6, 12]} /><meshStandardMaterial color="#ef4444" /></mesh>
-            <mesh castShadow position={[-4, 8, 0]}><boxGeometry args={[12, 5, 8]} /><meshStandardMaterial color="white" /></mesh>
+            <mesh castShadow position={[0, 5, 0]}><boxGeometry args={[45, 9, 18]} /><meshStandardMaterial color="#ef4444" /></mesh>
+            <mesh castShadow position={[-6, 12, 0]}><boxGeometry args={[18, 7, 12]} /><meshStandardMaterial color="white" /></mesh>
             {el.label && (
-              <Billboard position={[0, 33, 0]}>
-                <Text depthTest={false} fontSize={8} color="white" outlineWidth={0.4} outlineColor="#000000">{el.label}</Text>
+              <Billboard position={[0, 45, 0]}>
+                <Text depthTest={false} fontSize={14} color="white" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
               </Billboard>
             )}
           </group>
@@ -601,19 +601,19 @@ function Element3D({ el }) {
       return (
         <Float speed={2.5} rotationIntensity={0.4} floatIntensity={1} position={[X, 10, Z]}>
           <group>
-            <mesh castShadow position={[0, 0, 0]} rotation={[Math.PI, 0, 0]}>
-              <coneGeometry args={[4, 10, 8]} />
+            <mesh castShadow position={[0, -5, 0]} rotation={[Math.PI, 0, 0]}>
+              <coneGeometry args={[8, 20, 8]} />
               <meshStandardMaterial color={el.labelColor || "#ef4444"} />
             </mesh>
-            <mesh castShadow position={[0, 8, 0]}>
-              <sphereGeometry args={[6, 16, 16]} />
+            <mesh castShadow position={[0, 10, 0]}>
+              <sphereGeometry args={[12, 16, 16]} />
               <meshStandardMaterial color={el.labelColor || "#ef4444"} />
             </mesh>
-            <Billboard position={[0, 37, 0]}>
-              <Html center position={[0, 10, 0]} style={{ fontSize: '24px', pointerEvents: 'none' }}>
+            <Billboard position={[0, 50, 0]}>
+              <Html center position={[0, 10, 0]} style={{ fontSize: '40px', pointerEvents: 'none' }}>
                 {el.icon}
               </Html>
-              <Text depthTest={false} position={[0, -5, 0]} fontSize={10} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
+              <Text depthTest={false} position={[0, -5, 0]} fontSize={14} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
                 {el.label}
               </Text>
             </Billboard>
@@ -651,14 +651,14 @@ function Element3D({ el }) {
       return (
         <group position={[X, 5, Z]}>
           <mesh position={[0, 10, 0]}>
-            <octahedronGeometry args={[8]} />
+            <octahedronGeometry args={[16]} />
             <meshStandardMaterial color="#ef4444" />
           </mesh>
-          <Billboard position={[0, 40, 0]}>
-            <Html center position={[0, 10, 0]} style={{ fontSize: '20px', pointerEvents: 'none' }}>
+          <Billboard position={[0, 50, 0]}>
+            <Html center position={[0, 10, 0]} style={{ fontSize: '40px', pointerEvents: 'none' }}>
               {el.icon}
             </Html>
-            <Text depthTest={false} position={[0, -5, 0]} fontSize={10} color="#ff0000" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
+            <Text depthTest={false} position={[0, -5, 0]} fontSize={14} color="#ff0000" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
               {el.label}
             </Text>
           </Billboard>
@@ -671,20 +671,20 @@ function Element3D({ el }) {
             <Billboard>
               {/* Outer Orange Circle */}
               <mesh>
-                <circleGeometry args={[12, 32]} />
+                <circleGeometry args={[20, 32]} />
                 <meshStandardMaterial color="#f97316" />
               </mesh>
               {/* Inner Yellow Circle */}
               <mesh position={[0, 0, 0.1]}>
-                <circleGeometry args={[9, 32]} />
+                <circleGeometry args={[15, 32]} />
                 <meshStandardMaterial color="#fcd34d" />
               </mesh>
               {/* Fire Emoji */}
-              <Html center position={[0, 0, 0.2]} style={{ fontSize: '14px', pointerEvents: 'none' }}>
+              <Html center position={[0, 0, 0.2]} style={{ fontSize: '28px', pointerEvents: 'none' }}>
                 {el.icon}
               </Html>
               {/* Label */}
-              <Text depthTest={false} position={[0, -18, 0]} fontSize={10} color="#ff4500" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
+              <Text depthTest={false} position={[0, -28, 0]} fontSize={14} color="#ff4500" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
                 {el.label}
               </Text>
             </Billboard>
