@@ -289,20 +289,52 @@ function Element3D({ el }) {
   const Z = (el.y || el.y1 || el.cy || 275) - 275;
 
   switch (el.type) {
-    case 'zone':
+    case 'zone': {
+      let geometry;
+      if (el.points && el.points.length > 0) {
+        const points2d = el.points.map(p => new THREE.Vector2(p.x - 400, p.y - 275));
+        const curve = new THREE.SplineCurve(points2d);
+        const smoothPoints = curve.getPoints(50);
+        const shape = new THREE.Shape();
+        shape.moveTo(smoothPoints[0].x, smoothPoints[0].y);
+        for (let i = 1; i < smoothPoints.length; i++) {
+          shape.lineTo(smoothPoints[i].x, smoothPoints[i].y);
+        }
+        shape.lineTo(smoothPoints[0].x, smoothPoints[0].y);
+        geometry = <extrudeGeometry args={[shape, { depth: 2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 1, bevelThickness: 1 }]} />;
+      } else {
+        geometry = <boxGeometry args={[el.w, 2, el.h]} />;
+      }
+      
+      const isWater = el.fill === '#3b82f6';
+      
+      let labelPos = [0, 25, 0];
+      if (el.points && el.points.length > 0) {
+         let cx = 0, cy = 0;
+         el.points.forEach(p => { cx += p.x; cy += p.y; });
+         cx /= el.points.length;
+         cy /= el.points.length;
+         labelPos = [cx - 400, 25, cy - 275];
+      }
+      
       return (
-        <group position={[el.x + el.w/2 - 400, 0.5, el.y + el.h/2 - 275]}>
-          <mesh>
-            <boxGeometry args={[el.w, 1, el.h]} />
-            <meshStandardMaterial color={el.fill === '#3b82f6' ? '#1e40af' : (el.fill || '#7c6a4a')} opacity={0.6} transparent={true} />
+        <group position={el.points ? [0, 0, 0] : [el.x + el.w/2 - 400, 0.5, el.y + el.h/2 - 275]}>
+          <mesh rotation={el.points ? [Math.PI/2, 0, 0] : [0, 0, 0]} position={el.points ? [0, 1, 0] : [0, 0, 0]}>
+            {geometry}
+            {isWater ? (
+              <meshPhysicalMaterial color="#2563eb" transmission={0.6} opacity={0.9} transparent={true} roughness={0.1} ior={1.4} thickness={5} metalness={0.2} />
+            ) : (
+              <meshStandardMaterial color={el.fill || '#7c6a4a'} opacity={0.6} transparent={true} />
+            )}
           </mesh>
           {el.label && (
-            <Billboard position={[0, 25, 0]}>
-              <Text depthTest={false} fontSize={10} color="#f3f4f6" outlineWidth={0.5} outlineColor="#000000">{el.label}</Text>
-            </Billboard>
+             <Billboard position={labelPos}>
+               <Text depthTest={false} fontSize={14} color={isWater ? "#ffffff" : "#f3f4f6"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
+             </Billboard>
           )}
         </group>
       );
+    }
     case 'road': {
       const dx = el.x2 - el.x1;
       const dy = el.y2 - el.y1;
@@ -426,18 +458,91 @@ function Element3D({ el }) {
            )}
         </group>
       );
-    case 'building':
+    case 'building': {
       const isSch = el.label?.includes('School') || el.label?.includes('College');
+      const baseColor = isSch ? "#fef3c7" : "#e2e8f0"; // light cream for school, gray otherwise
+      const accentColor = isSch ? "#dc2626" : "#475569"; // red roofs for school, slate otherwise
+      
       return (
         <group position={[X, 0, Z]}>
-          <mesh castShadow receiveShadow position={[0, 20, 0]}><boxGeometry args={[35, 40, 35]} /><meshStandardMaterial color={isSch ? "#d97706" : "#64748b"} /></mesh>
+          {/* Main Block */}
+          <mesh castShadow receiveShadow position={[0, 15, 0]}>
+            <boxGeometry args={[50, 30, 20]} />
+            <meshStandardMaterial color={baseColor} />
+          </mesh>
+          
+          {/* Roof Slab */}
+          <mesh castShadow receiveShadow position={[0, 31, 0]}>
+            <boxGeometry args={[52, 2, 22]} />
+            <meshStandardMaterial color={accentColor} />
+          </mesh>
+          
+          {/* Left Wing */}
+          <mesh castShadow receiveShadow position={[-25, 10, 8]}>
+            <boxGeometry args={[20, 20, 25]} />
+            <meshStandardMaterial color={baseColor} />
+          </mesh>
+          {/* Left Wing Roof */}
+          <mesh castShadow receiveShadow position={[-25, 21, 8]}>
+            <boxGeometry args={[22, 2, 27]} />
+            <meshStandardMaterial color={accentColor} />
+          </mesh>
+          
+          {/* Right Wing */}
+          <mesh castShadow receiveShadow position={[25, 10, 8]}>
+            <boxGeometry args={[20, 20, 25]} />
+            <meshStandardMaterial color={baseColor} />
+          </mesh>
+          {/* Right Wing Roof */}
+          <mesh castShadow receiveShadow position={[25, 21, 8]}>
+            <boxGeometry args={[22, 2, 27]} />
+            <meshStandardMaterial color={accentColor} />
+          </mesh>
+
+          {/* Entrance Portico (Center) */}
+          <mesh castShadow receiveShadow position={[0, 8, 12]}>
+            <boxGeometry args={[16, 16, 10]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          {/* Portico Doors/Windows */}
+          <mesh position={[-3, 6, 17.1]}>
+            <boxGeometry args={[3, 10, 0.5]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+          <mesh position={[3, 6, 17.1]}>
+            <boxGeometry args={[3, 10, 0.5]} />
+            <meshStandardMaterial color="#1e293b" />
+          </mesh>
+          {/* Portico Roof */}
+          <mesh castShadow receiveShadow position={[0, 17, 12]}>
+            <boxGeometry args={[18, 2, 12]} />
+            <meshStandardMaterial color={accentColor} />
+          </mesh>
+
+          {/* Central Clock Tower */}
+          <mesh castShadow receiveShadow position={[0, 37, 0]}>
+            <boxGeometry args={[10, 10, 10]} />
+            <meshStandardMaterial color={baseColor} />
+          </mesh>
+          {/* Clock Tower Roof */}
+          <mesh castShadow receiveShadow position={[0, 43, 0]}>
+            <boxGeometry args={[12, 2, 12]} />
+            <meshStandardMaterial color={accentColor} />
+          </mesh>
+          {/* Clock Face */}
+          <mesh position={[0, 37, 5.1]}>
+            <circleGeometry args={[3, 16]} />
+            <meshStandardMaterial color="#ffffff" />
+          </mesh>
+          
           {el.label && (
-            <Billboard position={[0, 65, 0]}>
-              <Text depthTest={false} fontSize={10} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
+            <Billboard position={[0, 60, 0]}>
+              <Text depthTest={false} fontSize={14} color={el.labelColor || "#ffffff"} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
             </Billboard>
           )}
         </group>
       );
+    }
     case 'tree_pine':
       return (
         <group position={[X, 0, Z]}>
@@ -479,8 +584,8 @@ function Element3D({ el }) {
             <mesh position={[0, 0.4, 0]} scale={[1, 0.05, 1]}>
               <tubeGeometry args={[curve, 64, el.width || 25, 8, false]} />
               <meshPhysicalMaterial 
-                color="#0284c7" 
-                transmission={0.8} 
+                color="#2563eb" 
+                transmission={0.6} 
                 opacity={1} 
                 transparent={true}
                 metalness={0.2} 
@@ -519,12 +624,60 @@ function Element3D({ el }) {
          );
       } else if (labelLower.includes('range')) { 
          geometry = (
-           <group position={[0, 5, 0]}>
-             <mesh position={[0, 0, 15]}><boxGeometry args={[40, 5, 5]} /><meshStandardMaterial color="#d2b48c" /></mesh>
-             <mesh position={[-10, 10, -10]}><boxGeometry args={[5, 10, 1]} /><meshStandardMaterial color="#ffffff" /></mesh>
-             <mesh position={[10, 10, -10]}><boxGeometry args={[5, 10, 1]} /><meshStandardMaterial color="#ffffff" /></mesh>
-             <mesh position={[-10, 10, -9.4]}><cylinderGeometry args={[2, 2, 1.2]} rotation={[Math.PI/2, 0, 0]} /><meshStandardMaterial color="#ef4444" /></mesh>
-             <mesh position={[10, 10, -9.4]}><cylinderGeometry args={[2, 2, 1.2]} rotation={[Math.PI/2, 0, 0]} /><meshStandardMaterial color="#ef4444" /></mesh>
+           <group position={[0, -10, 0]}>
+              {/* Dirt Berm (Bullet Catcher) */}
+              <mesh castShadow receiveShadow position={[0, 10, -25]}>
+                <boxGeometry args={[70, 20, 15]} />
+                <meshStandardMaterial color="#854d0e" />
+              </mesh>
+              
+              {/* Targets */}
+              {[-18, 0, 18].map((tx, i) => (
+                <group key={i} position={[tx, 0, -10]}>
+                  {/* Pole */}
+                  <mesh castShadow receiveShadow position={[0, 5, 0]}>
+                    <boxGeometry args={[1, 10, 1]} />
+                    <meshStandardMaterial color="#451a03" />
+                  </mesh>
+                  {/* Board */}
+                  <mesh castShadow receiveShadow position={[0, 10, 0]}>
+                    <boxGeometry args={[10, 10, 1]} />
+                    <meshStandardMaterial color="#fef3c7" />
+                  </mesh>
+                  {/* Outer White Ring */}
+                  <mesh castShadow receiveShadow position={[0, 10, 0.6]} rotation={[Math.PI/2, 0, 0]}>
+                    <cylinderGeometry args={[4, 4, 0.2, 32]} />
+                    <meshStandardMaterial color="#ffffff" />
+                  </mesh>
+                  {/* Inner Red Bullseye */}
+                  <mesh castShadow receiveShadow position={[0, 10, 0.7]} rotation={[Math.PI/2, 0, 0]}>
+                    <cylinderGeometry args={[2, 2, 0.2, 32]} />
+                    <meshStandardMaterial color="#ef4444" />
+                  </mesh>
+                </group>
+              ))}
+
+              {/* Firing Line Shelter */}
+              <mesh castShadow receiveShadow position={[0, 15, 25]}>
+                <boxGeometry args={[70, 2, 20]} />
+                <meshStandardMaterial color="#475569" />
+              </mesh>
+              <mesh castShadow receiveShadow position={[-30, 7.5, 30]}>
+                <cylinderGeometry args={[1.5, 1.5, 15]} />
+                <meshStandardMaterial color="#94a3b8" />
+              </mesh>
+              <mesh castShadow receiveShadow position={[30, 7.5, 30]}>
+                <cylinderGeometry args={[1.5, 1.5, 15]} />
+                <meshStandardMaterial color="#94a3b8" />
+              </mesh>
+              <mesh castShadow receiveShadow position={[-30, 7.5, 20]}>
+                <cylinderGeometry args={[1.5, 1.5, 15]} />
+                <meshStandardMaterial color="#94a3b8" />
+              </mesh>
+              <mesh castShadow receiveShadow position={[30, 7.5, 20]}>
+                <cylinderGeometry args={[1.5, 1.5, 15]} />
+                <meshStandardMaterial color="#94a3b8" />
+              </mesh>
            </group>
          );
       } else if (labelLower.includes('camp')) {

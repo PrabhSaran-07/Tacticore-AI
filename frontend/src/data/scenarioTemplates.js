@@ -14,7 +14,10 @@ const SCENARIO_TEMPLATES = {
     bgImage: '/assets/mohi_map.png', 
     elements: [
       { type: 'label', x: 250, y: 40, text: 'SCALE - 2CM = 1KM', color: '#111', size: 14 },
-      { type: 'zone', x: 0, y: 350, w: 450, h: 200, fill: '#3b82f6', label: 'Lake' },
+      { type: 'zone', fill: '#3b82f6', label: 'Lake', points: [
+        {x: 0, y: 300}, {x: 100, y: 310}, {x: 200, y: 330}, {x: 300, y: 380},
+        {x: 380, y: 450}, {x: 400, y: 550}, {x: 0, y: 550}
+      ] },
       { type: 'road', x1: 430, y1: 0, x2: 750, y2: 550, width: 35 },
       { type: 'road', x1: 250, y1: 130, x2: 480, y2: 260, width: 18 },
       { type: 'road', x1: 480, y1: 260, x2: 700, y2: 220, width: 18 },
