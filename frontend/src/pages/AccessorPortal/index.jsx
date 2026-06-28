@@ -106,16 +106,29 @@ function renderSubmissionElement(el, idx) {
           {el.label && <text x={el.x} y={el.y + 28} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="9" fontWeight="bold">{el.label}</text>}
         </g>
       );
-    case 'house':
-      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🏠</text>;
     case 'tree_pine':
-      return <text key={idx} x={el.x} y={el.y} fontSize="35" textAnchor="middle">🌲</text>;
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <path d="M 0 0 L 10 -20 L 20 0 Z" fill="#14532d" />
+          <path d="M 2 -10 L 10 -30 L 18 -10 Z" fill="#166534" />
+          <rect x="8" y="0" width="4" height="6" fill="#422006" />
+        </g>
+      );
     case 'tree_palm':
-      return <text key={idx} x={el.x} y={el.y} fontSize="35" textAnchor="middle">🌴</text>;
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <path d="M 0 0 Q 5 -20 10 0 T 20 0" fill="none" stroke="#422006" strokeWidth="3" />
+          <path d="M 5 -15 L -10 -25 M 5 -15 L 20 -25 M 5 -15 L 5 -35" stroke="#166534" strokeWidth="3" strokeLinecap="round" />
+        </g>
+      );
     case 'boat':
-      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🚤</text>;
-    case 'fire':
-      return <text key={idx} x={el.x} y={el.y} fontSize="35" textAnchor="middle">🔥</text>;
+      return (
+        <g key={idx} transform={`translate(${el.x},${el.y})`}>
+          <path d="M 0 0 L 30 0 L 40 -10 L -10 -10 Z" fill="#ef4444" stroke="#991b1b" />
+          <rect x="5" y="-18" width="15" height="8" fill="white" />
+          {el.label && <text y="-25" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">{el.label}</text>}
+        </g>
+      );
     case 'bridge':
       return (
         <g key={idx} transform={`translate(${el.x1},${el.y1})`}>

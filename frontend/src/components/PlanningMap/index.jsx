@@ -35,12 +35,6 @@ function renderElement(el, idx) {
       );
     case 'house':
       return <text key={idx} x={el.x} y={el.y} fontSize="45" textAnchor="middle">🏠</text>;
-    case 'tree_pine':
-      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🌲</text>;
-    case 'tree_palm':
-      return <text key={idx} x={el.x} y={el.y} fontSize="40" textAnchor="middle">🌴</text>;
-    case 'boat':
-      return <text key={idx} x={el.x} y={el.y} fontSize="45" textAnchor="middle">🚤</text>;
     case 'fire':
       return (
         <g key={idx}>
