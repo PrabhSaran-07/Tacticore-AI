@@ -222,46 +222,55 @@ const SCENARIO_TEMPLATES = {
     bgImage: '/assets/jungle_mine.png',
     elements: [
       { type: 'label', x: 400, y: 30, text: 'Scale - 6CM = 2KM', color: '#111', size: 14 },
+      
+      // Red 2D Terrain Labels
+      { type: 'label', x: 350, y: 150, text: 'Jungle', color: '#ef4444', size: 12 },
+      { type: 'label', x: 700, y: 150, text: 'Mandwa', color: '#ef4444', size: 12 },
+      { type: 'label', x: 150, y: 470, text: 'Dilnagar', color: '#ef4444', size: 12 },
+      { type: 'label', x: 490, y: 70, text: 'Aki 13KM', color: '#ef4444', size: 10 },
+      { type: 'label', x: 610, y: 520, text: 'iggal 13KM', color: '#ef4444', size: 10 },
 
-      // River (Blue curved path)
-      { type: 'road', x1: 0, y1: 520, x2: 350, y2: 450, width: 45, color: '#3b82f6' },
-      { type: 'road', x1: 350, y1: 450, x2: 450, y2: 470, width: 45, color: '#3b82f6' },
-      { type: 'road', x1: 450, y1: 470, x2: 800, y2: 250, width: 45, color: '#3b82f6' },
+      // River (Smooth flowing 3D curve)
+      { type: 'river', width: 45, points: [
+          { x: 0, y: 520 },
+          { x: 350, y: 450 },
+          { x: 450, y: 470 },
+          { x: 800, y: 250 }
+        ] 
+      },
 
       // Highway (Black diagonal road)
       { type: 'road', x1: 420, y1: 0, x2: 600, y2: 550, width: 35 },
       
       // Bridge (where Highway crosses River)
-      { type: 'bridge', x: 550, y: 440, vertical: true, length: 70, width: 38, rotation: -0.3 }, 
+      { type: 'bridge', x: 550, y: 440, length: 110, width: 38, rotation: -1.254 }, 
 
       // Railway Track
       { type: 'railway', x1: 0, y1: 400, x2: 800, y2: 120 },
 
       // Dirt Paths
-      // Path 1: From Railway to Almora
-      { type: 'road', x1: 320, y1: 290, x2: 200, y2: 200, width: 15 },
-      // Path 2: From Railway to Riverside
-      { type: 'road', x1: 320, y1: 290, x2: 360, y2: 430, width: 15 },
+      // Continuous path from Almora Village across the railway to the Riverside
+      { type: 'road', x1: 180, y1: 170, x2: 350, y2: 420, width: 15 },
 
       // Villages / Buildings
       // Almora (Top-Left)
-      { type: 'village', x: 150, y: 150, label: 'Almora' },
+      { type: 'village', x: 150, y: 150 },
       { type: 'house', x: 130, y: 130 },
       { type: 'house', x: 170, y: 120 },
       { type: 'house', x: 180, y: 160 },
       { type: 'house', x: 120, y: 180 },
 
       // Mandwa (Top-Right)
-      { type: 'village', x: 700, y: 100, label: 'Mandwa' },
+      { type: 'village', x: 700, y: 100 },
       { type: 'house', x: 680, y: 80 },
       { type: 'house', x: 720, y: 120 },
       { type: 'building', x: 700, y: 90 }, // Tower
 
       // Dilnagar / Police Post (Bottom-Left)
-      { type: 'building', x: 150, y: 450, label: 'Dilnagar' },
-      { type: 'house', x: 120, y: 430 },
-      { type: 'house', x: 180, y: 420 },
-      { type: 'house', x: 140, y: 480 },
+      { type: 'building', x: 150, y: 410 },
+      { type: 'house', x: 110, y: 390 },
+      { type: 'house', x: 180, y: 390 },
+      { type: 'house', x: 140, y: 430 },
 
       // Boats
       { type: 'boat', x: 320, y: 460, label: 'Boat' },
@@ -280,6 +289,22 @@ const SCENARIO_TEMPLATES = {
       { type: 'tree_pine', x: 400, y: 150 },
       { type: 'tree_pine', x: 340, y: 170 },
       { type: 'tree_pine', x: 370, y: 190 },
+      // Extra dense jungle trees
+      { type: 'tree_pine', x: 280, y: 70 },
+      { type: 'tree_pine', x: 310, y: 90 },
+      { type: 'tree_pine', x: 290, y: 110 },
+      { type: 'tree_pine', x: 340, y: 50 },
+      { type: 'tree_pine', x: 370, y: 70 },
+      { type: 'tree_pine', x: 410, y: 100 },
+      { type: 'tree_pine', x: 430, y: 130 },
+      { type: 'tree_pine', x: 420, y: 170 },
+      { type: 'tree_pine', x: 390, y: 180 },
+      { type: 'tree_pine', x: 360, y: 160 },
+      { type: 'tree_pine', x: 330, y: 150 },
+      { type: 'tree_pine', x: 310, y: 180 },
+      { type: 'tree_pine', x: 350, y: 200 },
+      { type: 'tree_pine', x: 400, y: 210 },
+      { type: 'tree_pine', x: 370, y: 220 },
 
       // Trees - Mandwa
       { type: 'tree_pine', x: 650, y: 60 },
@@ -289,14 +314,22 @@ const SCENARIO_TEMPLATES = {
       { type: 'tree_pine', x: 760, y: 100 },
 
       // Trees - Bottom Right
-      { type: 'tree_pine', x: 650, y: 350 },
+      { type: 'tree_pine', x: 650, y: 410 },
       { type: 'tree_pine', x: 720, y: 380 },
       { type: 'tree_pine', x: 680, y: 430 },
 
-      // Trees - Bottom Left
+      // Trees - Bottom Left (Dilnagar dense scatter)
       { type: 'tree_pine', x: 80, y: 350 },
-      { type: 'tree_pine', x: 100, y: 500 },
-      { type: 'tree_pine', x: 50, y: 460 },
+      { type: 'tree_pine', x: 100, y: 420 },
+      { type: 'tree_pine', x: 50, y: 390 },
+      { type: 'tree_pine', x: 100, y: 330 },
+      { type: 'tree_pine', x: 180, y: 340 },
+
+      // Trees - Middle Scattered (Near paths and highway)
+      { type: 'tree_pine', x: 280, y: 240 },
+      { type: 'tree_pine', x: 300, y: 390 },
+      { type: 'tree_pine', x: 500, y: 300 },
+      { type: 'tree_pine', x: 420, y: 320 },
       
       // Trees - Almora Palm Trees
       { type: 'tree_palm', x: 220, y: 150 },
@@ -306,11 +339,11 @@ const SCENARIO_TEMPLATES = {
       // Original Markers (Aligned to 2D image)
       { type: 'start_point', x: 470, y: 500, label: 'Point A (Riverside)' },
       { type: 'end_point', x: 150, y: 150, label: 'Almora Village' },
-      { type: 'threat', icon: '🛤', x: 300, y: 300, label: 'Fishplate Removed', labelColor: '#ef4444' },
+      { type: 'threat', icon: '🛤', x: 300, y: 300, label: 'Fishplate', labelColor: '#ef4444' },
       { type: 'threat', icon: '💣', x: 580, y: 370, label: 'Road Mine (CM in 1hr)', labelColor: '#ef4444' },
       { type: 'threat', icon: '🐅', x: 380, y: 100, label: 'Tigress Attack', labelColor: '#ef4444' },
       { type: 'fire', icon: '🔥', x: 700, y: 150, label: 'Haystack Fire', labelColor: '#ef4444' },
-      { type: 'poi', icon: '🆘', x: 150, y: 450, label: 'Police Post (Dilnagar)', labelColor: '#3b82f6' }
+      { type: 'poi', icon: '🆘', x: 150, y: 410, label: 'Police Post (Dilnagar)', labelColor: '#3b82f6' }
     ],
     legend: [
       { color: '#ef4444', label: 'Terrorist/Emergency' },

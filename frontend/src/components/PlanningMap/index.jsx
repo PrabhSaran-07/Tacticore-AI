@@ -316,13 +316,13 @@ function Element3D({ el }) {
       
       return (
         <group position={[midX, 0.6, midZ]} rotation={[0, -angle, 0]}>
-          <mesh rotation={[-Math.PI/2, 0, 0]}>
-            <planeGeometry args={[length, el.width || 20]} />
-            <meshStandardMaterial color={roadColor} />
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[length, 0.4, el.width || 20]} />
+            <meshStandardMaterial color={roadColor} roughness={0.9} />
           </mesh>
           {isHighway && (
-             <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.1, 0]}>
-               <planeGeometry args={[length, 2]} />
+             <mesh position={[0, 0.25, 0]}>
+               <boxGeometry args={[length, 0.1, 2]} />
                <meshStandardMaterial color="#ffffff" />
              </mesh>
           )}
@@ -364,9 +364,9 @@ function Element3D({ el }) {
       const sleepers = [];
       for (let i = 0; i < numSleepers; i++) {
          sleepers.push(
-            <mesh key={i} position={[-length/2 + (i * 5) + 2.5, 0.2, 0]}>
-               <boxGeometry args={[1.5, 0.2, 10]} />
-               <meshStandardMaterial color="#5c3a21" />
+            <mesh key={i} position={[-length/2 + (i * 5) + 2.5, 0.5, 0]}>
+               <boxGeometry args={[1.5, 0.4, 10]} />
+               <meshStandardMaterial color="#451a03" roughness={0.9} />
             </mesh>
          );
       }
@@ -374,20 +374,20 @@ function Element3D({ el }) {
       return (
         <group position={[midX, 0.75, midZ]} rotation={[0, -angle, 0]}>
           {/* Gravel Bed */}
-          <mesh rotation={[-Math.PI/2, 0, 0]}>
-            <planeGeometry args={[length, 12]} />
-            <meshStandardMaterial color="#374151" />
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[length, 0.6, 12]} />
+            <meshStandardMaterial color="#4b5563" roughness={1} />
           </mesh>
           {/* Wooden Sleepers */}
           {sleepers}
           {/* Metal Rails */}
-          <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.4, 3]}>
-            <planeGeometry args={[length, 1.2]} />
-            <meshStandardMaterial color="#94a3b8" />
+          <mesh position={[0, 0.8, 3]}>
+            <boxGeometry args={[length, 0.4, 1.2]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} />
           </mesh>
-          <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.4, -3]}>
-            <planeGeometry args={[length, 1.2]} />
-            <meshStandardMaterial color="#94a3b8" />
+          <mesh position={[0, 0.8, -3]}>
+            <boxGeometry args={[length, 0.4, 1.2]} />
+            <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} />
           </mesh>
         </group>
       );
@@ -467,6 +467,36 @@ function Element3D({ el }) {
         </Float>
       );
     case 'river':
+      if (el.points && el.points.length > 1) {
+        const curve = new THREE.CatmullRomCurve3(
+          el.points.map(p => new THREE.Vector3(p.x - 400, 0, p.y - 275)),
+          false,
+          'catmullrom',
+          0.5
+        );
+        return (
+          <group>
+            <mesh position={[0, 0.4, 0]} scale={[1, 0.05, 1]}>
+              <tubeGeometry args={[curve, 64, el.width || 25, 8, false]} />
+              <meshPhysicalMaterial 
+                color="#0284c7" 
+                transmission={0.8} 
+                opacity={1} 
+                transparent={true}
+                metalness={0.2} 
+                roughness={0.1} 
+                ior={1.5} 
+                thickness={2} 
+              />
+            </mesh>
+            {el.label && (
+              <Billboard position={[el.labelX ? el.labelX - 400 : (el.x || 400) - 400, 15, el.labelY ? el.labelY - 275 : (el.y || 275) - 275]}>
+                <Text depthTest={false} fontSize={12} color="#93c5fd" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
+              </Billboard>
+            )}
+          </group>
+        );
+      }
       return el.label ? (
         <Billboard position={[el.labelX ? el.labelX - 400 : X, 10, el.labelY ? el.labelY - 275 : Z]}>
           <Text depthTest={false} fontSize={12} color="#93c5fd" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.label}</Text>
@@ -545,8 +575,9 @@ function Element3D({ el }) {
     case 'bridge':
       const bLen = el.length || 40;
       const bWid = el.width || 20;
+      const bRot = el.rotation !== undefined ? el.rotation : (el.vertical ? Math.PI/2 : 0);
       return (
-        <group position={[X, 5, Z]} rotation={[0, el.vertical ? Math.PI/2 : 0, 0]}>
+        <group position={[X, 5, Z]} rotation={[0, bRot, 0]}>
           <mesh position={[0, 5, 0]}>
             <boxGeometry args={[bLen, 5, bWid]} />
             <meshStandardMaterial color="#6b7280" />
@@ -624,28 +655,45 @@ function Element3D({ el }) {
             <meshStandardMaterial color="#ef4444" />
           </mesh>
           <Billboard position={[0, 40, 0]}>
-            <Text depthTest={false} fontSize={10} color="#ff0000" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
-              {el.icon} {el.label}
+            <Html center position={[0, 10, 0]} style={{ fontSize: '20px', pointerEvents: 'none' }}>
+              {el.icon}
+            </Html>
+            <Text depthTest={false} position={[0, -5, 0]} fontSize={10} color="#ff0000" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
+              {el.label}
             </Text>
           </Billboard>
         </group>
       );
     case 'fire':
       return (
-        <group position={[X, 5, Z]}>
-          <mesh position={[-4, 5, 0]}><coneGeometry args={[4, 12, 8]} /><meshStandardMaterial color="#ff4500" /></mesh>
-          <mesh position={[4, 7, 2]}><coneGeometry args={[5, 15, 8]} /><meshStandardMaterial color="#ffcc00" /></mesh>
-          <mesh position={[0, 9, -3]}><coneGeometry args={[6, 18, 8]} /><meshStandardMaterial color="#ff0000" /></mesh>
-          <Billboard position={[0, 40, 0]}>
-            <Text depthTest={false} fontSize={10} color="#ff4500" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
-              {el.icon} {el.label}
-            </Text>
-          </Billboard>
+        <group position={[X, 15, Z]}>
+          <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5}>
+            <Billboard>
+              {/* Outer Orange Circle */}
+              <mesh>
+                <circleGeometry args={[12, 32]} />
+                <meshStandardMaterial color="#f97316" />
+              </mesh>
+              {/* Inner Yellow Circle */}
+              <mesh position={[0, 0, 0.1]}>
+                <circleGeometry args={[9, 32]} />
+                <meshStandardMaterial color="#fcd34d" />
+              </mesh>
+              {/* Fire Emoji */}
+              <Html center position={[0, 0, 0.2]} style={{ fontSize: '14px', pointerEvents: 'none' }}>
+                {el.icon}
+              </Html>
+              {/* Label */}
+              <Text depthTest={false} position={[0, -18, 0]} fontSize={10} color="#ff4500" outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">
+                {el.label}
+              </Text>
+            </Billboard>
+          </Float>
         </group>
       );
     case 'label':
       return (
-        <Billboard position={[X, 10, Z]}>
+        <Billboard position={[X, 45, Z]}>
           <Text depthTest={false} fontSize={el.size || 10} color={el.color || '#ffffff'} outlineWidth={0.5} outlineColor="#000000" fontWeight="bold">{el.text}</Text>
         </Billboard>
       );
