@@ -1073,14 +1073,14 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#0f172a', position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--darker)', position: 'relative' }}>
 
       {/* 2D/3D Toggle Button */}
       <button 
         onClick={(e) => { e.stopPropagation(); setIs3D(prev => !prev); }} 
         style={{ 
           position: 'absolute', top: '10px', right: '60px', zIndex: 10, 
-          background: is3D ? '#3b82f6' : 'rgba(15,23,42,0.8)', color: 'white', border: '1px solid var(--gray-700)', 
+          background: is3D ? '#3b82f6' : 'var(--gray-900)', color: is3D ? 'white' : 'var(--gray-200)', border: '1px solid var(--gray-700)', 
           padding: '0.4rem 0.75rem', borderRadius: '0.4rem', cursor: 'pointer',
           fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
           transition: 'all 0.2s'
@@ -1100,7 +1100,7 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
       )}
 
       {/* Scenario name badge */}
-      <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'rgba(15,23,42,0.85)', padding: '0.35rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--gray-700)', fontSize: '0.75rem', color: 'var(--gray-300)' }}>
+      <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10, background: 'var(--gray-900)', padding: '0.35rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--gray-700)', fontSize: '0.75rem', color: 'var(--gray-300)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}><SvgIcon name={template.thumbnail} size="1.1rem" /> {template.name} {is3D && <span style={{ color: '#3b82f6', fontWeight: 'bold', marginLeft: '0.5rem' }}>3D</span>}</span>
       </div>
 

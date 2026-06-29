@@ -567,12 +567,12 @@ export default function AccessorPortal() {
       {expandedSubmission && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000,
-          background: 'rgba(0,0,0,0.95)', display: 'flex', flexDirection: 'column',
+          background: 'var(--darker)', display: 'flex', flexDirection: 'column',
           padding: '2rem', animation: 'fadeIn 0.2s ease-out'
         }}>
            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <div>
-                <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>{expandedSubmission.sub.cadetName}'s Submission</h2>
+                <h2 style={{ color: 'var(--gray-100)', margin: 0, fontSize: '1.5rem' }}>{expandedSubmission.sub.cadetName}'s Submission</h2>
                 <p style={{ color: 'var(--gray-400)', margin: 0, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   Session: <span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{expandedSubmission.session.sessionCode}</span>
                   <button onClick={() => copyCode(expandedSubmission.session.sessionCode)} style={{ background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }} title="Copy Session Code"><SvgIcon name="📋" size="0.85rem" /></button>
@@ -597,8 +597,8 @@ export default function AccessorPortal() {
               
               <div style={{ flex: '0 0 calc(25% - 1.5rem)', background: 'var(--gray-800)', borderRadius: '0.5rem', display: 'flex', flexDirection: 'column', border: '1px solid var(--gray-700)', overflow: 'hidden' }}>
                  <div style={{ display: 'flex', borderBottom: '1px solid var(--gray-700)', flexShrink: 0 }}>
-                   <button onClick={() => setExpandedSubmissionTab('analysis')} style={{ flex: 1, padding: '0.75rem', background: expandedSubmissionTab === 'analysis' ? 'var(--gray-700)' : 'transparent', color: expandedSubmissionTab === 'analysis' ? 'white' : 'var(--gray-400)', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>AI Analysis</button>
-                   <button onClick={() => setExpandedSubmissionTab('log')} style={{ flex: 1, padding: '0.75rem', background: expandedSubmissionTab === 'log' ? 'var(--gray-700)' : 'transparent', color: expandedSubmissionTab === 'log' ? 'white' : 'var(--gray-400)', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>Action Log</button>
+                   <button onClick={() => setExpandedSubmissionTab('analysis')} style={{ flex: 1, padding: '0.75rem', background: expandedSubmissionTab === 'analysis' ? 'var(--gray-700)' : 'transparent', color: expandedSubmissionTab === 'analysis' ? 'var(--gray-100)' : 'var(--gray-400)', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>AI Analysis</button>
+                   <button onClick={() => setExpandedSubmissionTab('log')} style={{ flex: 1, padding: '0.75rem', background: expandedSubmissionTab === 'log' ? 'var(--gray-700)' : 'transparent', color: expandedSubmissionTab === 'log' ? 'var(--gray-100)' : 'var(--gray-400)', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>Action Log</button>
                  </div>
                  <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
                    {expandedSubmissionTab === 'analysis' && (
@@ -713,7 +713,7 @@ export default function AccessorPortal() {
       {showProblemModal && expandedSubmission && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10002,
-          background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
         }}>
           <div className="card" style={{ maxWidth: '650px', width: '100%', boxShadow: '0 0 40px rgba(59,130,246,0.3)' }}>
             <h2 className="card-title" style={{ marginBottom: '1rem', color: 'var(--primary)', fontSize: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}><SvgIcon name="📋" /> Problem Statement</h2>
@@ -742,12 +742,12 @@ export default function AccessorPortal() {
       {showAIReportModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10001,
-          background: 'rgba(0,0,0,0.95)', display: 'flex', flexDirection: 'column',
+          background: 'var(--darker)', display: 'flex', flexDirection: 'column',
           padding: '2rem', animation: 'fadeIn 0.2s ease-out'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '1.8rem' }}>Advanced Behavioral AI Reports</h2>
+              <h2 style={{ color: 'var(--gray-100)', margin: 0, fontSize: '1.8rem' }}>Advanced Behavioral AI Reports</h2>
               <p style={{ color: 'var(--gray-400)', margin: 0 }}>GPE OLQ Analysis Engine v2.0 (Gemini Powered)</p>
             </div>
             <button className="btn btn-secondary" onClick={() => setShowAIReportModal(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}><SvgIcon name="✕" size="0.85rem" /> Close</button>
