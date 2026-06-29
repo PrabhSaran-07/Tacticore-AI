@@ -38,7 +38,7 @@ function renderElement(el, idx) {
         </g>
       );
     case 'house':
-      return <SvgIcon key={idx} name="house" size="36" x={el.x - 18} y={el.y - 18} color="#b45309" />;
+      return <text key={idx} x={el.x} y={el.y + 12} textAnchor="middle" fontSize="36">🏠</text>;
     case 'fire':
       return (
         <g key={idx}>
@@ -48,7 +48,7 @@ function renderElement(el, idx) {
           <ellipse cx={el.x} cy={el.y} rx="10" ry="14" fill="#ffcc00" opacity="0.8">
             <animate attributeName="rx" values="10;12;10" dur="0.4s" repeatCount="indefinite" />
           </ellipse>
-          <SvgIcon name="fire" size="20" x={el.x - 10} y={el.y - 10} color="#f97316" />
+          <text x={el.x} y={el.y + 6} textAnchor="middle" fontSize="20">🔥</text>
         </g>
       );
     case 'river':
@@ -71,14 +71,14 @@ function renderElement(el, idx) {
       const isSch = el.label?.includes('School');
       return (
         <g key={idx} transform={`translate(${el.x},${el.y})`}>
-          <SvgIcon name={isSch ? 'school' : 'building'} size="40" x={-20} y={-20} color="var(--primary)" />
+          <text y="6" textAnchor="middle" fontSize="40">{isSch ? '🏫' : '🏢'}</text>
           {el.label && <text y="-25" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="14" fontWeight="bold" filter="drop-shadow(1px 1px 1px black)">{el.label}</text>}
         </g>
       );
     case 'poi':
       return (
         <g key={idx}>
-          <SvgIcon name={el.icon} size="24" x={el.x - 12} y={el.y - 12} color="var(--warning)" />
+          <text x={el.x} y={el.y + 8} textAnchor="middle" fontSize="24">{el.icon}</text>
           {el.label && <text x={el.x} y={el.y + 25} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="10" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -97,7 +97,7 @@ function renderElement(el, idx) {
     case 'bridge':
       return (
         <g key={idx} transform={`translate(${el.x1},${el.y1})`}>
-          <SvgIcon name="bridge" size="36" x={-18} y={-18} color="#cbd5e1" />
+          <text y="12" textAnchor="middle" fontSize="36">🌉</text>
           {el.label && <text y="-25" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="13" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -1311,13 +1311,9 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
             {markers.map(marker => (
               <g key={marker.id}>
                 <circle cx={marker.x} cy={marker.y} r="18" fill={marker.color} fillOpacity="0.25" stroke={marker.color} strokeWidth="2" />
-                <SvgIcon
-                  name={marker.type?.startsWith('add_custom_') ? getCustomIcon(marker.label) : marker.icon}
-                  x={marker.x - 9}
-                  y={marker.y - 9}
-                  size="18"
-                  color={marker.color}
-                />
+                <text x={marker.x} y={marker.y + 6} textAnchor="middle" fontSize="18">
+                  {marker.type?.startsWith('add_custom_') ? getCustomIcon(marker.label) : marker.icon}
+                </text>
                 <text x={marker.x} y={marker.y + 26} textAnchor="middle" fill="#f3f4f6" fontSize="9" fontWeight="bold">{marker.label}</text>
                 {marker.placedBy && (
                   <text x={marker.x} y={marker.y + 36} textAnchor="middle" fill="#60a5fa" fontSize="7">by {marker.placedBy}</text>

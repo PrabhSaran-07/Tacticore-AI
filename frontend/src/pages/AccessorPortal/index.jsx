@@ -20,18 +20,13 @@ function renderSubmissionElement(el, idx) {
     case 'road':
       return <line key={idx} x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} stroke="#6b7280" strokeWidth={el.width || 18} />;
     case 'house':
-      return (
-        <g key={idx}>
-          <rect x={el.x} y={el.y} width="40" height="38" rx="4" fill="#8b7355" stroke="#a0856e" strokeWidth="1.5" />
-          <polygon points={`${el.x},${el.y} ${el.x+40},${el.y} ${el.x+20},${el.y-16}`} fill="#6b5a3a" />
-        </g>
-      );
+      return <text key={idx} x={el.x + 20} y={el.y + 20} textAnchor="middle" fontSize="36">🏠</text>;
     case 'fire':
       return (
         <g key={idx}>
           <ellipse cx={el.x} cy={el.y} rx="18" ry="22" fill="#ff4500" opacity="0.7" />
           <ellipse cx={el.x} cy={el.y} rx="10" ry="14" fill="#ffcc00" opacity="0.8" />
-          <SvgIcon name="fire" size="20" x={el.x - 10} y={el.y - 10} color="#f97316" />
+          <text x={el.x} y={el.y + 7} textAnchor="middle" fontSize="20">🔥</text>
         </g>
       );
     case 'river':
@@ -67,14 +62,14 @@ function renderSubmissionElement(el, idx) {
       const isSch = el.label?.includes('School');
       return (
         <g key={idx} transform={`translate(${el.x},${el.y})`}>
-          <SvgIcon name={isSch ? 'school' : 'building'} size="36" x={-18} y={-18} color="var(--primary)" />
+          <text y="6" textAnchor="middle" fontSize="36">{isSch ? '🏫' : '🏢'}</text>
           {el.label && <text y="-25" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="12" fontWeight="bold">{el.label}</text>}
         </g>
       );
     case 'poi':
       return (
         <g key={idx}>
-          <SvgIcon name={el.icon} size="24" x={el.x - 12} y={el.y - 12} color="var(--warning)" />
+          <text x={el.x} y={el.y + 8} textAnchor="middle" fontSize="24">{el.icon}</text>
           {el.label && <text x={el.x} y={el.y + 25} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="10" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -104,7 +99,7 @@ function renderSubmissionElement(el, idx) {
       return (
         <g key={idx}>
           <circle cx={el.x} cy={el.y} r="18" fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,2" />
-          <SvgIcon name={el.icon} size="18" x={el.x - 9} y={el.y - 9} color="#ef4444" />
+          <text x={el.x} y={el.y + 6} textAnchor="middle" fontSize="18">{el.icon}</text>
           {el.label && <text x={el.x} y={el.y + 28} textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="9" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -134,7 +129,7 @@ function renderSubmissionElement(el, idx) {
     case 'bridge':
       return (
         <g key={idx} transform={`translate(${el.x1},${el.y1})`}>
-          <SvgIcon name="bridge" size="36" x={-18} y={-18} color="#cbd5e1" />
+          <text y="12" textAnchor="middle" fontSize="36">🌉</text>
           {el.label && <text y="-25" textAnchor="middle" fill={el.labelColor || "#ef4444"} fontSize="12" fontWeight="bold">{el.label}</text>}
         </g>
       );
@@ -158,7 +153,7 @@ function renderSubmissionElement(el, idx) {
       return (
         <g key={idx}>
           <circle cx={el.x} cy={el.y} r="30" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" strokeWidth="2" strokeDasharray="6,3" />
-          <SvgIcon name={el.icon} size="22" x={el.x - 11} y={el.y - 11} color="#f59e0b" />
+          <text x={el.x} y={el.y + 7} textAnchor="middle" fontSize="22">{el.icon}</text>
           {el.label && <text x={el.x} y={el.y + 30} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">{el.label}</text>}
           {el.sublabel && <text x={el.x} y={el.y + 42} textAnchor="middle" fill="#f59e0b" fontSize="8">{el.sublabel}</text>}
         </g>
