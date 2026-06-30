@@ -72,10 +72,10 @@ export default function ChatPanel({ roomId = '', user }) {
                 <div style={{
                   display: 'inline-block', padding: '0.3rem 0.5rem', borderRadius: '0.3rem', maxWidth: '90%',
                   background: isSystem ? 'var(--gray-800)' : isInstructor ? 'rgba(245,158,11,0.15)' : isMe ? 'var(--primary)' : 'var(--gray-800)',
-                  color: isInstructor ? 'var(--warning)' : 'white', textAlign: 'left',
+                  color: isInstructor ? 'var(--warning)' : isMe ? '#fff' : 'var(--gray-100)', textAlign: 'left',
                   border: isInstructor ? '1px solid rgba(245,158,11,0.3)' : 'none'
                 }}>
-                  <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4 }}>{msg.message}</p>
+                  <p style={{ fontSize: '0.75rem', margin: 0, lineHeight: 1.4, color: 'inherit' }}>{msg.message}</p>
                 </div>
                 <p style={{ fontSize: '0.55rem', color: 'var(--gray-600)', marginTop: '0.15rem' }}>
                   {msg.sender} · {msg.timestamp}

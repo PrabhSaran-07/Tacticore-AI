@@ -541,7 +541,7 @@ export default function SimulationRoom({ user, onLogout }) {
       {/* ══════════ CADET VIEW ══════════ */}
       {isCadet && (<>
         {/* Compact Header Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.75rem', background: 'rgba(5,7,10,0.95)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.75rem', background: 'var(--gray-900)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ fontWeight: '700', color: 'var(--gray-100)', fontSize: '1rem', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Planning Room</span>
             <span style={{ fontSize: '0.65rem', color: 'var(--gray-500)' }}>{session.sessionCode} · Chest <strong style={{ color: 'var(--success)' }}>{user?.chestNo}</strong></span>
@@ -570,34 +570,34 @@ export default function SimulationRoom({ user, onLogout }) {
             <PlanningMap ref={mapRef} roomId={sessionId} activeMode={activeMode} user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} />
           </div>
           {/* Sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', borderLeft: '1px solid rgba(14,165,233,0.12)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--gray-800)', borderLeft: '1px solid rgba(14,165,233,0.12)', overflow: 'hidden' }}>
             
             {/* TOP HALF: Tools & Resources */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               {/* Map Actions */}
-              <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-                <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Map Actions</p>
+              <div style={{ padding: '0.5rem 0.6rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.35rem', fontWeight: '700', letterSpacing: '0.08em' }}>Map Actions</p>
                 <div style={{ display: 'flex', gap: '0.2rem', flexWrap: 'wrap' }}>
-                  <button onClick={() => setActiveMode('view')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'view' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'view' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}><SvgIcon name="👁" size="0.85rem" /> View</button>
-                  <button onClick={() => setActiveMode('draw_path')} style={{ flex: 1, padding: '0.3rem', borderRadius: '0.2rem', border: activeMode === 'draw_path' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'draw_path' ? 'rgba(14,165,233,0.2)' : 'transparent', color: 'white', cursor: 'pointer', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}><SvgIcon name="✏" size="0.85rem" /> Mark Route</button>
+                  <button onClick={() => setActiveMode('view')} style={{ flex: 1, padding: '0.4rem', borderRadius: '0.2rem', border: activeMode === 'view' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'view' ? 'var(--primary-glow)' : 'transparent', color: activeMode === 'view' ? 'var(--primary)' : 'var(--gray-200)', cursor: 'pointer', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}><SvgIcon name="👁" size="0.95rem" /> View</button>
+                  <button onClick={() => setActiveMode('draw_path')} style={{ flex: 1, padding: '0.4rem', borderRadius: '0.2rem', border: activeMode === 'draw_path' ? '1px solid var(--primary)' : '1px solid var(--gray-700)', background: activeMode === 'draw_path' ? 'var(--primary-glow)' : 'transparent', color: activeMode === 'draw_path' ? 'var(--primary)' : 'var(--gray-200)', cursor: 'pointer', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.2rem' }}><SvgIcon name="✏" size="0.95rem" /> Mark Route</button>
                 </div>
               </div>
               {/* Legend */}
               {template?.legend && (
-                <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-                  <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Legend</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                <div style={{ padding: '0.5rem 0.6rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.35rem', fontWeight: '700', letterSpacing: '0.08em' }}>Legend</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                     {template.legend.map(({ color, label }, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: 'var(--gray-300)' }}>
-                        <div style={{ width: '0.55rem', height: '0.55rem', background: color, borderRadius: '0.1rem', flexShrink: 0 }} /><span>{label}</span>
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--gray-300)' }}>
+                        <div style={{ width: '0.75rem', height: '0.75rem', background: color, borderRadius: '0.1rem', flexShrink: 0 }} /><span>{label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
               {/* Resources */}
-              <div style={{ padding: '0.4rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-                <p style={{ fontSize: '0.6rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.25rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources (Select to Place)</p>
+              <div style={{ padding: '0.5rem 0.6rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.35rem', fontWeight: '700', letterSpacing: '0.08em' }}>Resources (Select to Place)</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.2rem' }}>
                   {[
                     { k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
@@ -617,15 +617,15 @@ export default function SimulationRoom({ user, onLogout }) {
                     const isSelected = activeMode === r.k;
                     return (
                       <button key={r.k} onClick={() => setActiveMode(r.k)} style={{ 
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.25rem 0.35rem', 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.35rem 0.4rem', 
                         borderRadius: '0.2rem', cursor: 'pointer', border: 'none', textAlign: 'left',
-                        background: isSelected ? 'rgba(14,165,233,0.2)' : 'var(--gray-800)',
+                        background: isSelected ? 'var(--primary-glow)' : 'var(--gray-800)',
                         boxShadow: isSelected ? 'inset 0 0 0 1px var(--primary)' : 'inset 0 0 0 1px var(--gray-700)'
                       }}>
-                        <span style={{ fontSize: '0.65rem', color: isSelected ? 'white' : 'var(--gray-300)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <SvgIcon name={r.i} size="0.85rem" /> {r.l}
+                        <span style={{ fontSize: '0.8rem', color: isSelected ? 'var(--primary)' : 'var(--gray-300)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <SvgIcon name={r.i} size="0.9rem" /> {r.l}
                         </span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace', marginLeft: '0.2rem' }}>{rem}/{r.mx}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', color: rem === 0 ? 'var(--danger)' : 'var(--success)', fontFamily: 'monospace', marginLeft: '0.2rem' }}>{rem}/{r.mx}</span>
                       </button>
                     );
                   })}
@@ -676,7 +676,7 @@ export default function SimulationRoom({ user, onLogout }) {
 
       {/* ══════════ ACCESSOR VIEW ══════════ */}
       {isAccessor && (<>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.75rem', background: 'rgba(5,7,10,0.95)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.3rem 0.75rem', background: 'var(--gray-900)', borderBottom: '1px solid rgba(14,165,233,0.2)', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ fontWeight: '700', color: 'var(--gray-100)', fontSize: '0.95rem', fontFamily: 'Rajdhani, sans-serif', textTransform: 'uppercase' }}>Instructor Panel</span>
             <span style={{ fontSize: '0.6rem', color: 'var(--gray-500)' }}>{session.sessionCode}</span>
@@ -695,13 +695,13 @@ export default function SimulationRoom({ user, onLogout }) {
           <div style={{ overflow: 'hidden', position: 'relative', minHeight: 0, borderRight: '1px solid rgba(14,165,233,0.15)' }}>
             <PlanningMap ref={mapRef} roomId={sessionId} activeMode="view" user={user} scenarioId={session?.scenarioId} assignedResources={session?.assignedResources} onMarkersChange={setCurrentMarkers} readOnly={true} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', background: 'rgba(5,10,20,0.95)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--gray-800)', overflow: 'hidden' }}>
             
             {/* TOP HALF: Info Panels */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               {/* Resources compact */}
-              <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-                <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Resources Used</p>
+              <div style={{ padding: '0.5rem 0.6rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.3rem', fontWeight: '700' }}>Resources Used</p>
                 {[
                   { k: 'add_truck', i: '🚒', l: 'Trucks', mx: session?.assignedResources?.fireTrucks || 0 },
                   { k: 'add_person', i: '👷', l: 'Volunteers', mx: session?.assignedResources?.volunteers || 0 },
@@ -716,19 +716,19 @@ export default function SimulationRoom({ user, onLogout }) {
                   }))
                 ].filter(r => r.mx > 0).map(r => {
                   const used = currentMarkers.filter(m => m.type === r.k).length;
-                  return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', padding: '0.1rem 0', color: 'var(--gray-300)', alignItems: 'center' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}><SvgIcon name={r.i} size="0.85rem" /> {r.l}</span>
+                  return <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '0.2rem 0', color: 'var(--gray-300)', alignItems: 'center' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><SvgIcon name={r.i} size="0.9rem" /> {r.l}</span>
                     <span style={{ fontFamily: 'monospace', fontWeight: '700', color: used >= r.mx ? 'var(--danger)' : 'var(--success)' }}>{used}/{r.mx}</span>
                   </div>;
                 })}
               </div>
               {/* Cadets — show who submitted */}
-              <div style={{ padding: '0.35rem 0.5rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
-                <p style={{ fontSize: '0.55rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.2rem', fontWeight: '700' }}>Cadets ({participants.length})</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+              <div style={{ padding: '0.5rem 0.6rem', borderBottom: '1px solid rgba(14,165,233,0.08)' }}>
+                <p style={{ fontSize: '0.7rem', color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: '0.3rem', fontWeight: '700' }}>Cadets ({participants.length})</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                   {participants.map((p, idx) => {
                     const hasSubmitted = submittedCadets.has(p._id);
-                    return <span key={idx} style={{ padding: '0.08rem 0.4rem', borderRadius: '1rem', fontSize: '0.6rem', fontWeight: '600', background: hasSubmitted ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.15)', color: hasSubmitted ? 'var(--success)' : 'var(--primary)', textDecoration: hasSubmitted ? 'line-through' : 'none', display: 'inline-flex', alignItems: 'center' }}>{hasSubmitted ? <SvgIcon name="✓" size="0.75rem" color="var(--success)" style={{ marginRight: '0.15rem' }} /> : ''}{p.chestNo || p.name}</span>;
+                    return <span key={idx} style={{ padding: '0.15rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: '600', background: hasSubmitted ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.15)', color: hasSubmitted ? 'var(--success)' : 'var(--primary)', textDecoration: hasSubmitted ? 'line-through' : 'none', display: 'inline-flex', alignItems: 'center' }}>{hasSubmitted ? <SvgIcon name="✓" size="0.85rem" color="var(--success)" style={{ marginRight: '0.2rem' }} /> : ''}{p.chestNo || p.name}</span>;
                   })}
                 </div>
               </div>

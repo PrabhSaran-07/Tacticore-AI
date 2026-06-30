@@ -1091,11 +1091,11 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
 
       {/* Zoom Controls (only in 2D) */}
       {!is3D && (
-        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'center', background: 'rgba(15,23,42,0.8)', padding: '0.4rem', borderRadius: '0.5rem', border: '1px solid var(--gray-700)' }}>
-          <button onClick={() => setZoom(z => Math.min(z * 1.2, 5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SvgIcon name="➕" size="0.9rem" /></button>
+        <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'center', background: 'var(--gray-900)', padding: '0.4rem', borderRadius: '0.5rem', border: '1px solid var(--gray-700)' }}>
+          <button onClick={() => setZoom(z => Math.min(z * 1.2, 5))} style={{ background: 'none', border: 'none', color: 'var(--gray-100)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SvgIcon name="➕" size="0.9rem" /></button>
           <span style={{ fontSize: '0.65rem', color: 'var(--primary)', fontFamily: 'monospace', fontWeight: '700' }}>{Math.round(zoom * 100)}%</span>
-          <button onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SvgIcon name="🔄" size="0.9rem" /></button>
-          <button onClick={() => setZoom(z => Math.max(z / 1.2, 0.5))} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SvgIcon name="➖" size="0.9rem" /></button>
+          <button onClick={() => { setZoom(1); setPan({x: 0, y: 0}); }} style={{ background: 'none', border: 'none', color: 'var(--gray-100)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SvgIcon name="🔄" size="0.9rem" /></button>
+          <button onClick={() => setZoom(z => Math.max(z / 1.2, 0.5))} style={{ background: 'none', border: 'none', color: 'var(--gray-100)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}><SvgIcon name="➖" size="0.9rem" /></button>
         </div>
       )}
 
@@ -1334,7 +1334,7 @@ const PlanningMap = forwardRef(function PlanningMap({ roomId, activeMode, user, 
       {!readOnly && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0.35rem 0.75rem', background: 'rgba(15,23,42,0.95)',
+          padding: '0.35rem 0.75rem', background: 'var(--gray-900)',
           borderTop: '1px solid var(--gray-700)', fontSize: '0.7rem', color: 'var(--gray-400)'
         }}>
           <span>
