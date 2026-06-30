@@ -195,7 +195,7 @@ exports.advancePhase = async (req, res) => {
 
 exports.endSession = async (req, res) => {
   try {
-    const session = await Session.findById(req.params.id);
+    const session = await Session.findById(req.params.id).populate('participants', 'name chestNo');
     if (!session) return res.status(404).json({ message: 'Session not found' });
     if (session.accessor.toString() !== req.user.id) return res.status(403).json({ message: 'Only the session creator can end it' });
 
@@ -208,6 +208,57 @@ exports.endSession = async (req, res) => {
     if (io) io.to(session._id.toString()).emit('sessionPhaseChange', { phase: 'completed', status: 'completed', endedAt: session.endedAt });
 
     res.status(200).json({ session });
+
+    // Background task: Auto-generate AI Reports so they are ready instantly when requested later
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+      (async () => {
+        try {
+          const { analyzeCadetSession } = require('../services/geminiAnalyzer');
+          const { analyzeFullSession } = require('../services/olqAnalyzer');
+          const reportPromises = session.participants.map(async (participant) => {
+            let report;
+            try {
+              const geminiResult = await analyzeCadetSession(session, participant);
+              report = {
+                cadetId: participant._id, cadetName: participant.name, chestNo: participant.chestNo,
+                olqRadar: Object.fromEntries(Object.entries(geminiResult.olq_scores).map(([k, v]) => [k, v.score])),
+                overallOPS: geminiResult.ops_score, qualitativeSummary: geminiResult.qualitative_summary,
+                behavioralHighlights: geminiResult.strengths.map(s => ({ timestamp: new Date(new Date(session.startedAt || Date.now()).getTime() + s.timestamp_ms), description: s.behavioral_moment, olqSignal: s.olq })),
+                cautionFlags: geminiResult.caution_flags.map(f => ({ description: f.description, timestamp: new Date(new Date(session.startedAt || Date.now()).getTime() + f.timestamp_ms), severity: f.type === 'WITHDRAWAL' ? 'high' : 'medium' })),
+                generatedAt: new Date(), analysisVersion: "2.0 (Gemini)"
+              };
+            } catch (geminiError) {
+              const heuristicReport = analyzeFullSession(participant._id.toString(), participant.name, session);
+              report = {
+                cadetId: participant._id, cadetName: participant.name, chestNo: participant.chestNo,
+                olqRadar: heuristicReport.scores, overallOPS: heuristicReport.overallScore * 10, qualitativeSummary: heuristicReport.recommendation,
+                behavioralHighlights: heuristicReport.strengths.map(s => ({ description: `Heuristic signal: ${s.name} scored ${s.score}`, olqSignal: s.name })),
+                cautionFlags: heuristicReport.improvements.filter(i => i.score < 4).map(i => ({ description: `Area for growth: ${i.name}`, severity: 'medium' })),
+                analysisVersion: "1.0 (Heuristic)", generatedAt: new Date()
+              };
+            }
+            return report;
+          });
+          const reports = await Promise.all(reportPromises);
+          
+          const allScores = {};
+          const OLQ_KEYS = ['EI', 'RA', 'OA', 'PE', 'SA', 'C', 'SR', 'IN', 'SC', 'SD', 'AIG', 'L', 'D', 'Cour'];
+          OLQ_KEYS.forEach(k => { allScores[k] = reports.map(r => r.olqRadar[k] || 0).sort((a, b) => a - b); });
+          reports.forEach(r => {
+            r.groupComparison = {};
+            OLQ_KEYS.forEach(k => {
+              const arr = allScores[k]; const rank = arr.indexOf(r.olqRadar[k] || 0);
+              r.groupComparison[k] = Math.round(((rank + 1) / arr.length) * 100);
+            });
+          });
+          
+          session.aiReports = reports;
+          await session.save();
+        } catch (err) {
+          console.error("Background AI generation failed:", err);
+        }
+      })();
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error ending session', error: error.message });
   }
@@ -353,13 +404,32 @@ exports.submitAnswer = async (req, res) => {
     const User = require('../models/User');
     const cadet = await User.findById(req.user.id);
     const submissionData = { cadet: req.user.id, cadetName: cadet ? `${cadet.chestNo} - ${cadet.name}` : 'Cadet', submittedAt: new Date(), mapState: { markers: markers || [], paths: paths || [] }, note: note || '' };
-    const olqAnalysis = analyzeSubmission(submissionData, session);
-    submissionData.olqAnalysis = olqAnalysis;
+    
+    // Quick heuristic analysis for immediate UI feedback
+    const quickAnalysis = analyzeSubmission(submissionData, session);
+    submissionData.olqAnalysis = quickAnalysis;
 
     await Session.findByIdAndUpdate(req.params.id, { $pull: { submissions: { cadet: req.user.id } } });
     await Session.findByIdAndUpdate(req.params.id, { $push: { submissions: submissionData } });
 
+    // Respond immediately so the user isn't blocked!
     res.status(200).json({ message: 'Answer submitted successfully!', submission: submissionData });
+
+    // Fire and forget Gemini request in the background for accurate scoring
+    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+      (async () => {
+        try {
+          const { analyzeSubmissionGemini } = require('../services/geminiAnalyzer');
+          const deepAnalysis = await analyzeSubmissionGemini(submissionData, session);
+          await Session.updateOne(
+            { _id: session._id, 'submissions.cadet': req.user.id },
+            { $set: { 'submissions.$.olqAnalysis': deepAnalysis } }
+          );
+        } catch (e) {
+          console.error("Background Gemini submission error:", e);
+        }
+      })();
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error submitting answer', error: error.message });
   }
@@ -371,7 +441,23 @@ exports.getSubmissions = async (req, res) => {
     if (!session) return res.status(404).json({ message: 'Session not found' });
     if (session.submissions?.length > 0) {
       let updated = false;
-      session.submissions.forEach(sub => { if (!sub.olqAnalysis) { sub.olqAnalysis = analyzeSubmission(sub, session); updated = true; } });
+      const { analyzeSubmissionGemini } = require('../services/geminiAnalyzer');
+      const subPromises = session.submissions.map(async (sub) => {
+        if (!sub.olqAnalysis) { 
+          try {
+            if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+              sub.olqAnalysis = await analyzeSubmissionGemini(sub, session);
+            } else {
+              sub.olqAnalysis = analyzeSubmission(sub, session);
+            }
+          } catch(e) {
+            console.error("Gemini getSubmissions error:", e);
+            sub.olqAnalysis = analyzeSubmission(sub, session);
+          }
+          updated = true; 
+        }
+      });
+      await Promise.all(subPromises);
       if (updated) await session.save();
     }
     res.status(200).json({ submissions: session.submissions || [] });
@@ -389,13 +475,16 @@ exports.generateAIReport = async (req, res) => {
     const session = await Session.findById(req.params.id).populate('participants', 'name chestNo');
     if (!session) return res.status(404).json({ message: 'Session not found' });
 
-    const reports = [];
-    for (const participant of session.participants) {
+    // If already generated in the background at session end, return instantly!
+    if (session.aiReports && session.aiReports.length > 0) {
+      return res.status(200).json({ reports: session.aiReports });
+    }
+
+    const reportPromises = session.participants.map(async (participant) => {
       let report;
       try {
         if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
           const geminiResult = await analyzeCadetSession(session, participant);
-          // Map Gemini format back to internal format if needed
           report = {
             cadetId: participant._id,
             cadetName: participant.name,
@@ -426,7 +515,7 @@ exports.generateAIReport = async (req, res) => {
           cadetName: participant.name,
           chestNo: participant.chestNo,
           olqRadar: heuristicReport.scores,
-          overallOPS: heuristicReport.overallScore * 10, // scale to 100
+          overallOPS: heuristicReport.overallScore * 10,
           qualitativeSummary: heuristicReport.recommendation,
           behavioralHighlights: heuristicReport.strengths.map(s => ({
             description: `Heuristic signal: ${s.name} scored ${s.score}`,
@@ -440,8 +529,10 @@ exports.generateAIReport = async (req, res) => {
           generatedAt: new Date()
         };
       }
-      reports.push(report);
-    }
+      return report;
+    });
+
+    const reports = await Promise.all(reportPromises);
 
     // Compute group comparison percentiles
     const allScores = {};
@@ -485,16 +576,28 @@ exports.getAIReport = async (req, res) => {
 exports.getMyResults = async (req, res) => {
   try {
     const sessions = await Session.find({ 'submissions.cadet': req.user.id });
-    const results = [];
-    for (let session of sessions) {
+    const { analyzeSubmissionGemini } = require('../services/geminiAnalyzer');
+    const resultPromises = sessions.map(async (session) => {
       let submission = session.submissions.find(s => String(s.cadet) === String(req.user.id));
-      if (!submission) continue;
+      if (!submission) return null;
       if (!submission.olqAnalysis) {
-        submission.olqAnalysis = analyzeSubmission(submission, session);
+        try {
+          if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here') {
+            submission.olqAnalysis = await analyzeSubmissionGemini(submission, session);
+          } else {
+            submission.olqAnalysis = analyzeSubmission(submission, session);
+          }
+        } catch(e) {
+          console.error("Gemini getMyResults error:", e);
+          submission.olqAnalysis = analyzeSubmission(submission, session);
+        }
         await Session.updateOne({ _id: session._id, 'submissions.cadet': req.user.id }, { $set: { 'submissions.$.olqAnalysis': submission.olqAnalysis } });
       }
-      results.push({ sessionId: session._id, sessionCode: session.sessionCode, problemDescription: session.problemDescription, submission });
-    }
+      return { sessionId: session._id, sessionCode: session.sessionCode, problemDescription: session.problemDescription, submission };
+    });
+    
+    const resultsRaw = await Promise.all(resultPromises);
+    const results = resultsRaw.filter(r => r !== null);
     res.status(200).json({ results });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching results', error: error.message });

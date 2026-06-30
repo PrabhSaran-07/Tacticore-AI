@@ -96,89 +96,47 @@ You receive a JSON object with the following structure:
 YOUR TASK
 ════════════════════════════════════════════════
 
-Score the cadet on all 14 OLQs. For each OLQ:
-1. Identify the strongest behavioral evidence from the data
-2. Identify any penalty-triggering behaviors
-3. Compute a score 1–10 using the formula for that OLQ
-4. Write a 1-sentence evidence citation
+Score the cadet on all 14 OLQs based PURELY on how well their observed behaviors map to the definition of each OLQ. For each OLQ:
+1. Evaluate the behavioral data against the OLQ definition.
+2. Assign a score from 1-10 reflecting their proficiency.
+3. Identify the strongest behavioral evidence from the data to justify this score.
+4. Write a 1-sentence evidence citation.
 
 ════════════════════════════════════════════════
-OLQ SCORING FORMULAS
+OLQ DEFINITIONS
 ════════════════════════════════════════════════
 
-EI (Effective Intelligence):
-  base = (resources_deployed_pct × 3) + (semantic.logical_structure × 3) + (spatial_entropy_normalized × 4)
-  penalty: -2 if primary problem left unaddressed in plan_note
+EI (Effective Intelligence): The ability to solve practical problems efficiently using available resources. Look for spatial awareness, resource utilization, and structured planning.
 
-RA (Reasoning Ability):
-  base = (semantic.logical_structure × 5) + (semantic.precision × 3) + (complication_response_quality × 2)
-  complication_response_quality = 10 if cadet responded within 45s with structured chat message, else scale by latency
+RA (Reasoning Ability): The ability to grasp the essentials of a problem, analyze logically, and arrive at workable solutions. Look for logical structure in notes/chat and effective response to complications.
 
-OA (Organising Ability):
-  base = (resources_deployed_pct × 4) + (spatial_entropy_normalized × 3) + (timeline_used_bonus × 3)
-  timeline_used_bonus = 3 if cadet used timeline tool, else 0
-  penalty: -3 if resource conflicts detected in final plan
+OA (Organising Ability): The ability to arrange resources and information systematically to achieve the goal. Look for conflict-free plans and logical spatial arrangements.
 
-PE (Power of Expression):
-  base = (semantic.precision × 4) + (semantic.command_vocabulary × 4) + (avg_chat_message_length_normalized × 2)
-  avg_chat_message_length_normalized = min(avg_chat_message_length / 40, 1) × 10
+PE (Power of Expression): The ability to put across ideas clearly and concisely. Look for precise language, vocabulary, and clear communication in chats and notes.
 
-SA (Social Adaptability):
-  base = (semantic.tone_score × 5) + (adapted_after_feedback_bonus × 3) + (positive_reactions_given_normalized × 2)
-  adapted_after_feedback_bonus = 3 if cadet modified their plan after group pushback, else 0
-  penalty: -3 if hostile language detected (tone_score < 3)
+SA (Social Adaptability): The ability to adjust well to the group and social environment. Look for positive tone, constructive responses to feedback, and absence of hostility.
 
-C (Cooperation):
-  base = (semantic.team_orientation_score × 4) + (influence_edges_incoming × 0.5, capped at 3) + (built_on_others_bonus × 3)
-  built_on_others_bonus = 3 if any chat message explicitly references and builds on a teammate's idea
+C (Cooperation): The willingness and ability to work harmoniously with others. Look for team-oriented language, building on others' ideas, and incoming influence.
 
-SR (Sense of Responsibility):
-  base = (net_commitment_score × 4) + (covered_all_problems_bonus × 3) + (volunteered_hard_task_bonus × 3)
-  covered_all_problems_bonus = 3 if plan_note addresses both primary and at least 2 sub-problems
-  volunteered_hard_task_bonus = 3 if chat message contains volunteering language AND target task is Critical-priority
+SR (Sense of Responsibility): The thorough understanding of one's duties and execution thereof. Look for commitment to solving all problems (primary and sub-problems) and volunteering for critical tasks.
 
-IN (Initiative):
-  rank_score = (group_size - time_to_first_action_rank + 1) / group_size × 10
-  base = (rank_score × 5) + (first_phase_action_density × 3) + (unprompted_proposals_bonus × 2)
-  first_phase_action_density = actions_in_phase_1 / max_actions_phase_1_in_group × 10
-  unprompted_proposals_bonus = 2 if proposal_count > 0 AND proposals made before any teammate
+IN (Initiative): The ability to take the first step in unfamiliar situations. Look for quick first actions, high early-phase activity, and unprompted proposals.
 
-SC (Self-Confidence):
-  base = (position_maintained_score × 5) + (post_rejection_participation × 3) + (inverse_hesitation × 2)
-  position_maintained_score = 10 if position_maintained_under_pressure, else 4
-  post_rejection_participation = actions after last rejection / avg actions before rejection × 10 (capped 10)
-  inverse_hesitation = 10 - (longest_silence_in_phase_3_ms / 60000 × 10), min 0
+SC (Self-Confidence): Faith in one's own abilities. Look for maintaining positions under reasonable pressure, continued participation after rejection, and lack of hesitation.
 
-SD (Speed of Decision):
-  first_action_score = max(0, 10 - (time_to_first_action_ms / 30000))
-  complication_speed = max(0, 10 - (complication_response_latency_ms / 45000))
-  decisiveness = (1 - resource_removals/resource_placements) × 10
-  base = (first_action_score × 3) + (complication_speed × 4) + (decisiveness × 3)
+SD (Speed of Decision): The ability to arrive at workable decisions quickly. Look for fast responses to complications and quick first actions without excessive backtracking.
 
-AIG (Ability to Influence Group):
-  base = (proposals_accepted / max(proposal_count,1) × 10 × 4) + (influence_edges_outgoing × 0.5, capped at 4) + (dominant_voice_bonus × 2)
-  dominant_voice_bonus = 2 if this cadet IS the dominant_voice_cadet_id
+AIG (Ability to Influence Group): The ability to persuade others to accept one's ideas. Look for accepted proposals, being the dominant voice, and strong outgoing influence.
 
-L (Liveliness):
-  volume_score = min(total_actions / group_avg_total_actions, 1.5) × 6.67
-  variety_score = unique_event_types_used / 5 × 10
-  base = (volume_score × 5) + (variety_score × 3) + (semantic.tone_score × 2)
+L (Liveliness): The capacity to remain cheerful and energetic. Look for high active participation, varied event types, and a positive tone.
 
-D (Determination):
-  base = (plan_convergence_score × 4) + (resubmission_bonus × 3) + (sustained_effort_score × 3)
-  resubmission_bonus = 3 if cadet resubmitted a modified version of a rejected proposal
-  sustained_effort_score = actions_in_phase_4_5 / max(actions_in_phase_1_2, 1) × 10, capped 10
+D (Determination): The sustained effort to achieve a goal despite obstacles. Look for plan convergence, resubmitting improved ideas, and sustained activity in later phases.
 
-Cour (Courage):
-  base = 4 (baseline for participation)
-  + 3 if challenged_dominant_voice = true AND challenge included reasoned argument (semantic check)
-  + 2 if diverged_from_consensus = true AND plan_note explains the divergence
-  + 1 if challenge_count >= 2
-  penalty: -2 if group made an obvious resource conflict and cadet never flagged it
+Cour (Courage): The ability to stand up for what is right or take calculated risks. Look for challenging the dominant voice reasonably, diverging from consensus with justification, and identifying group errors.
 
 FINAL CLAMPING:
-  All scores: max(1, min(10, round(base, 1)))
-  OPS = sum(score_i × weight_i) / sum(weights), scaled to 100
+  All scores must be integers between 1 and 10.
+  OPS (Overall Potential Score) = average of all 14 OLQ scores, scaled to 100.
 
 ════════════════════════════════════════════════
 OUTPUT FORMAT
@@ -435,7 +393,7 @@ async function analyzeCadetSession(session, participant) {
     const inputData = prepareGeminiInput(session, participant);
     
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-flash-lite-latest",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -458,4 +416,60 @@ async function analyzeCadetSession(session, participant) {
   }
 }
 
-module.exports = { analyzeCadetSession };
+async function analyzeSubmissionGemini(submission, sessionData) {
+  const mockLog = [];
+  if (submission.mapState && submission.mapState.markers) {
+    submission.mapState.markers.forEach(m => mockLog.push({ cadetId: submission.cadet, type: 'board_add', phase: 'individual_planning' }));
+  }
+  const mockSession = { 
+    ...(sessionData.toObject ? sessionData.toObject() : sessionData), 
+    behavioralLog: [ ...((sessionData.toObject ? sessionData.toObject() : sessionData).behavioralLog || []), ...mockLog ],
+    submissions: [submission] 
+  };
+  
+  const participant = {
+    _id: submission.cadet,
+    name: submission.cadetName || "Cadet",
+    chestNo: submission.chestNo || ""
+  };
+  
+  if (!mockSession.participants) {
+      mockSession.participants = [participant];
+  } else if (!mockSession.participants.some(p => String(p._id) === String(participant._id))) {
+      mockSession.participants.push(participant);
+  }
+
+  const geminiResult = await analyzeCadetSession(mockSession, participant);
+  
+  // Format for legacy output format used by submission
+  const { OLQ_KEYS, OLQ_NAMES, OLQ_CATEGORIES } = require('./olqAnalyzer');
+  
+  const buildCategories = (scores) => {
+    const cats = {};
+    for (const [cat, keys] of Object.entries(OLQ_CATEGORIES)) {
+      const items = keys.map(k => ({ key: k, name: OLQ_NAMES[k], score: scores[k] }));
+      const avg = items.reduce((s, i) => s + i.score, 0) / items.length;
+      cats[cat] = { qualities: items, average: Math.round(avg * 10) / 10 };
+    }
+    return cats;
+  };
+
+  const scores = {};
+  for (const key of OLQ_KEYS) {
+    scores[key] = geminiResult.olq_scores[key] ? geminiResult.olq_scores[key].score : 5;
+  }
+
+  return {
+    overallScore: geminiResult.ops_score / 10,
+    categories: buildCategories(scores),
+    scores: scores,
+    strengths: geminiResult.strengths.map(s => ({ name: s.olq, score: s.score })),
+    improvements: geminiResult.development_areas.map(d => ({ name: d.olq, score: d.score })),
+    details: OLQ_KEYS.map(k => ({ name: OLQ_NAMES[k], score: scores[k], evidence: geminiResult.olq_scores[k] ? geminiResult.olq_scores[k].evidence : "" })),
+    recommendation: geminiResult.qualitative_summary,
+    metrics: { totalActions: mockLog.length, chatMessages: 0, proposalsSubmitted: 0, proposalsAccepted: 0, challengesMade: 0, timeToFirstSec: 0 },
+    analyzedAt: new Date()
+  };
+}
+
+module.exports = { analyzeCadetSession, analyzeSubmissionGemini };
